@@ -1,0 +1,1188 @@
+#include < amxmodx >
+#include < amxmisc >
+#include < fakemeta >
+#include < fakemeta_util >
+#include < cstrike >
+#include < engine >
+#include < hamsandwich >
+
+
+#include < xs >
+
+
+#pragma tabsize 0  
+
+#define PLUGIN_VERSION		"1.0"
+#define BREAK_COMPUTER		6
+#define MAX_PLAYERS		32 + 1
+
+#define is_valid_player(%1) ( 1 <= %1 <= gMaxPlayers )
+#define MONY 3000
+#define SENTRY_FL_LASTTHINKA 15
+
+new const gDamageSounds[ ][ ] = 
+{
+	"tesla/metal1.wav",
+	"tesla/metal2.wav",
+	"tesla/metal3.wav"
+};
+#define SENTRY_FL_LASTTHINKAFV 26
+new const gDispenserClassnameTesla[ ] = "Tesla";
+new String:CSSB_NAME[68] = "CSSB TESLA";  
+new const gDispenserActive[ ] = "tesla/dispenser.wav";
+new const gDispenserMdlTesla [ ] = "models/tesla/tesla.mdl";
+new const gHealingSprite[ ] = "sprites/tesla/tok.spr"
+new const gExploSprite[ ] = "sprites/dispexplo.spr";
+ new const szSounds[][] =
+{
+
+    "NewGameCsdm_New/sentry/fail_update_1.wav",
+    "NewGameCsdm_New/sentry/sentry_exp.wav"	
+}   
+new gHealingBeam;
+new gExploSpr;
+new gMetalGibs;
+new gMaxPlayers;
+
+new gMaxEnergy
+
+new gDispenserCost;
+new gCvarDispenserHealth;
+new g_iPlayerDispenser[33]
+new Float:gDispenserOrigin[ MAX_PLAYERS ][ 3 ];
+new gBeamcolor[ MAX_PLAYERS ][ 3 ];
+
+new bDispenserdd[33];
+
+native get_sentry_team(sentry)
+
+new g_cvar_TEsla_destone
+						 new Float:sentryhp1;
+						 new Float:sentryhp2;
+						 new Float:sentryhp3;
+						 new Float:sentryhp4;
+						 new Float:sentryhp5;
+						 new Float:disphp1;
+						 new Float:disphp2;
+						 new Float:disphp3;
+						 new Float:laser_hp;
+						 new Float:laserh_hp;
+						 new Float:laserv_hp;
+						 new Float:scaner_hp;
+						 new Float:laserfence_hp;
+public plugin_init()
+{
+	register_plugin( "TeslaCoil", PLUGIN_VERSION, "Sokrat" );
+	 register_dictionary("tesla.txt") 
+	register_event( "TextMsg", "EVENT_TextMsg", "a", "2&#Game_C", "2&#Game_w", "2&#Game_will_restart_in" );
+	register_logevent( "LOG_RoundEnd", 2, "1=Round_End" );
+	
+	RegisterHam( Ham_TakeDamage, "func_breakable", "bacon_TakeDamage", 1 );
+	RegisterHam( Ham_TakeDamage, "func_breakable", "bacon_TakeDamagePre", 0 );
+	
+	register_think( gDispenserClassnameTesla, "DispenserThink2" );
+	register_clcmd( "build_tesla", "CommandTeslaBuild" );
+	register_forward ( FM_TraceLine, "fw_TraceLine_Post", 1 )
+	
+	gMaxEnergy	= register_cvar( "max_energy", "12000.0" );					// РљРѕР»РёС‡РµСЃС‚РІРѕ СЌРЅРµСЂРіРёРё РІ С‚РµСЃР»Рµ
+	gDispenserCost = register_cvar( "tesla_cost", "7000" );					// Р¦РµРЅР° СѓСЃС‚РѕРЅРѕРІРєРё
+	gCvarDispenserHealth = register_cvar( "tesla_health", "3000" );			// Р—РґРѕСЂРѕРІСЊРµ
+	g_cvar_TEsla_destone = register_cvar( "tesla_destone", "3000" );		// РќР°РіСЂР°РґР° Р·Р° СЂР°Р·СЂСѓС€РµРЅРёРµ 
+	gMaxPlayers = get_maxplayers();
+}
+public client_connect( id )
+{
+	
+bDispenserdd[id] = 0
+}
+
+public client_disconnect( id )
+{
+	BreakAllPlayerDispensers(id)
+}
+
+public detonate_disp(id)
+{
+	BreakAllPlayerDispensers(id)
+	g_iPlayerDispenser[id] = 0
+}
+new g_iSPR_Explo1
+new g_iSPR_Explo2
+new szItemMenuVipFlag[64]
+native native_get_sentry_lvl(ent)
+native native_get_dispenser_lvl(ent)
+					     new Float:tesla_hp;
+						 new tesla_hp1;
+						 new Float:hpinsec;
+                         new Float:radiusdas;
+                         new Float:radius;
+						 new destoroy_money;
+						 new cost_tesla;
+						 new teslavipmax;
+						 new teslamax;
+						 new item_On_Off;
+						 new Float:hpinsec2;
+						 new owner_money;
+						 new Float:tesla_emk;
+						 new iItemMenuOnOffVip;
+						 
+public plugin_precache()
+{	
+		new iFile = fopen("addons/amxmodx/configs/Supremej/tesla.cfg", "rt");
+	if(iFile){
+		new szLineBuffer[600]
+		while(!(feof(iFile))){
+			fgets(iFile, szLineBuffer, charsmax(szLineBuffer));
+				
+
+			new Imeil[600]
+			new Model[600]
+			
+			parse(szLineBuffer, Imeil, charsmax(Imeil),Model, charsmax(Model));
+					if (equal(Imeil, "TESLA_ITEM_MENU_ON_OFF"))
+					{
+						item_On_Off = str_to_num(Model);
+					}
+											if (equal(Imeil, "TESLA_ITEM_MENU_ON_OFF_VIP"))
+						{
+							iItemMenuOnOffVip = str_to_num(Model);
+						}
+										if (equal(Imeil, "TESLA_MAX_BUILD"))
+					{
+						teslamax = str_to_num(Model);
+					}
+										if (equal(Imeil, "TESLA_MAX_ACCESS_BUILD"))
+					{
+						teslavipmax = str_to_num(Model);
+					}
+										if (equal(Imeil, "TESLA_FLAG_ACCESS_BUILD"))
+					{
+						copy(szItemMenuVipFlag, 63, Model);
+					}
+										if (equal(Imeil, "TESLA_MONEY_CREATE"))
+					{
+						cost_tesla = str_to_num(Model);
+					}
+										if (equal(Imeil, "TESLA_MONEY_DESTROY"))
+					{
+						destoroy_money = str_to_num(Model);
+					}
+														if (equal(Imeil, "TESLA_MONEY_CREATE_RETURN"))
+					{
+						owner_money = str_to_num(Model);
+					}
+										if (equal(Imeil, "TESLA_HP_LVL_1"))
+					{						 
+						tesla_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_SENTRY_MAX_HP_LVL_1"))
+					{						 
+						sentryhp1 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_SENTRY_MAX_HP_LVL_2"))
+					{						 
+						sentryhp2 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_SENTRY_MAX_HP_LVL_3"))
+					{						 
+						sentryhp3 = str_to_float(Model);
+					}										if (equal(Imeil, "TESLA_SENTRY_MAX_HP_LVL_4"))
+					{						 
+						sentryhp4 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_SENTRY_MAX_HP_LVL_5"))
+					{						 
+						sentryhp5 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_DISP_MAX_HP_LVL_1"))
+					{						 
+						disphp1 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_DISP_MAX_HP_LVL_2"))
+					{						 
+						disphp2 = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_DISP_MAX_HP_LVL_3"))
+					{						 
+						disphp3 = str_to_float(Model);
+					}
+										if (equal(Imeil, "TESLA_LM_MAX_HP"))
+					{						 
+						laser_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_LM_H_MAX_HP"))
+					{						 
+						laserh_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_LM_V_MAX_HP"))
+					{						 
+						laserv_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_LS_MAX_HP"))
+					{						 
+						scaner_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_LF_MAX_HP"))
+					{						 
+						laserfence_hp = str_to_float(Model);
+					}
+															if (equal(Imeil, "TESLA_HP_LVL_1"))
+					{						 
+						tesla_hp1 = str_to_num(Model);
+					}
+															if (equal(Imeil, "TESLA_CAPACITY"))
+					{						 
+						tesla_emk = str_to_float(Model);
+					}
+
+																				if (equal(Imeil, "TESLA_HP_BONUS_DETECTION_TARGET"))
+					{
+						hpinsec = str_to_float(Model);
+					}
+																									if (equal(Imeil, "TESLA_HP_BONUS_DETECTION_TARGET"))
+					{
+						hpinsec2 = str_to_float(Model);
+					}
+																									if (equal(Imeil, "TESLA_DIST_TARGET"))
+					{
+						radius = str_to_float(Model);
+					}
+																									if (equal(Imeil, "TESLA_DIST_DETECTION_TARGET"))
+					{
+						radiusdas = str_to_float(Model);
+					}
+					
+		}
+	}
+	gHealingBeam = precache_model( gHealingSprite );
+	gExploSpr = precache_model( gExploSprite );
+	    g_iSPR_Explo1=precache_model("sprites/NewGameCsdm_New/Sentry/spr_2.spr")     	
+    g_iSPR_Explo2=precache_model("sprites/NewGameCsdm_New/Sentry/spr_6.spr")  
+	
+	precache_model( gDispenserMdlTesla )
+	precache_sound( gDispenserActive );
+	precache_sound("sentry_gun_2023/fail_update_1.wav")
+	precache_sound("sentry_gun_2023/sentry_exp.wav")
+	new i;
+	precache_sound("sentry_gun_2023/sentry_exp.wav")
+	for( i = 0; i < sizeof gDamageSounds; i++ )
+	{
+		precache_sound( gDamageSounds[ i ] );
+	}
+}
+_Uf_ID_45()
+{
+	return read_flags(szItemMenuVipFlag);
+}
+new Float:g_energi
+public fw_TraceLine_Post ( Float:v1[3], Float:v2[3], noMonsters, id )
+{
+	if ( !is_valid_player ( id ) || is_user_bot ( id ) || !is_user_alive ( id ) )
+	return FMRES_IGNORED
+
+	new iHitEnt = get_tr ( TR_pHit )
+
+	if ( iHitEnt <= gMaxPlayers || !pev_valid ( iHitEnt ) )
+	return FMRES_IGNORED
+
+	new sClassname[32]
+	pev ( iHitEnt, pev_classname, sClassname, charsmax ( sClassname ) )
+
+	if ( !equal ( sClassname, gDispenserClassnameTesla ) )
+	return FMRES_IGNORED
+
+	new iTeam = pev ( iHitEnt, pev_iuser4 )
+
+	if ( _:cs_get_user_team ( id ) != iTeam )
+	return FMRES_IGNORED
+
+	new iHealth = pev ( iHitEnt, pev_health )
+
+	if ( iHealth <= 0 )
+	return FMRES_IGNORED
+
+	new iOwner = pev ( iHitEnt, pev_iuser2 )
+
+	if ( !is_user_connected ( iOwner ) )
+	return FMRES_IGNORED
+
+	new sName[33], team = (iTeam)
+	get_user_name ( iOwner, sName, charsmax ( sName ) )
+	
+g_energi = pev(iHitEnt, pev_armorvalue);
+		if (team == 1)
+	{
+		set_dhudmessage(255, 25, 30, -1.0, 0.35, 2, 0.0, 0.2, 0.0, 0.70, false);
+	show_dhudmessage ( id, "Р’Р»Р°РґРµР»РµС†: %s^nР—РґРѕСЂРѕРІСЊРµ: %d^nР•РјРєРѕСЃС‚СЊ: %d / %d", sName, iHealth, g_energi, floatround(tesla_emk) )	
+	}
+		if (team == 2)
+	{
+		set_dhudmessage(15, 25, 255, -1.0, 0.35, 2, 0.0, 0.2, 0.0, 0.70, false);
+	show_dhudmessage ( id, "Р’Р»Р°РґРµР»РµС†: %s^nР—РґРѕСЂРѕРІСЊРµ: %d^nР•РјРєРѕСЃС‚СЊ: %d / %d", sName, iHealth, g_energi, floatround(tesla_emk) )	
+	}
+	return FMRES_IGNORED
+}
+
+public bacon_TakeDamagePre( ent, idinflictor, idattacker, Float:damage, damagebits )
+{
+	new szClassname[ 32 ];
+	pev( ent, pev_classname, szClassname, charsmax( szClassname ) );
+	
+	if( equal( szClassname, gDispenserClassnameTesla ) )
+	{
+		new iOwner = pev( ent, pev_iuser2 );
+
+		if(!is_user_connected(iOwner) || 1 > iOwner > 32 || !is_user_connected(idattacker) || 1 > idattacker > 32)
+			return HAM_SUPERCEDE
+		
+		if(cs_get_user_team(iOwner)==cs_get_user_team(idattacker) && idattacker != iOwner)
+			return HAM_SUPERCEDE
+	}
+	return HAM_IGNORED	
+}
+
+public bacon_TakeDamage( ent, idinflictor, idattacker, Float:damage, damagebits )
+{
+	new szClassname[ 32 ];
+	pev( ent, pev_classname, szClassname, charsmax( szClassname ) );
+	
+	if( equal( szClassname, gDispenserClassnameTesla ) )
+	{
+		new iOwner = pev( ent, pev_iuser2 );
+
+		if(!is_user_connected(iOwner) || 1 > iOwner > 32 || !is_user_connected(idattacker) || 1 > idattacker > 32)
+			return HAM_SUPERCEDE
+		
+		if(cs_get_user_team(iOwner)==cs_get_user_team(idattacker) && idattacker != iOwner)
+			return HAM_SUPERCEDE
+					new Float:flOrigin[ 3 ];
+			pev( ent, pev_origin, flOrigin );
+			       new origin[3]
+ FVecIVec ( flOrigin, origin )
+					message_begin(MSG_BROADCAST,SVC_TEMPENTITY)
+	write_byte(TE_SPARKS)
+	write_coord(origin[0])
+	write_coord(origin[1])
+	write_coord(origin[2])
+	message_end()
+		if( pev( ent, pev_health ) <= 0.0 )
+		{
+			new szName[ 32 ];
+			get_user_name( idattacker, szName, charsmax( szName ) );
+
+		new ownName[ 32 ];
+			get_user_name( iOwner, ownName, charsmax( ownName ) );	
+							new team = pev ( ent, pev_iuser4 )
+        if (team == 1)
+		{
+        CreateExplosion(ent)
+		}
+		else{
+		CreateExplosion2(ent)
+		}
+			set_pev( ent, pev_flags, pev( ent, pev_flags ) | FL_KILLME ); 
+			if( idattacker == iOwner )
+			{
+				ChatColor( iOwner, "%L %L", iOwner, "TESLA_PREFIX", iOwner, "TESLA_DELETE", owner_money)
+				cs_set_user_money(iOwner,cs_get_user_money(iOwner) + owner_money) 
+			}
+			else{
+				ChatColor( iOwner, "%L %L", iOwner, "TESLA_PREFIX", iOwner, "TESLA_DESTONE1", szName)
+			ChatColor( idattacker, "%L %L", idattacker, "TESLA_PREFIX", idattacker, "TESLA_DESTONE2", ownName)
+				cs_set_user_money(idattacker, cs_get_user_money(idattacker) + destoroy_money)
+			}
+	
+		
+		bDispenserdd[ iOwner ]--;
+emit_sound( ent ,CHAN_VOICE,"sentry_gun_2023/sentry_exp.wav",1.0,0.5,0,PITCH_NORM)
+		}
+		
+		emit_sound( ent, CHAN_STATIC, gDamageSounds[ random_num( 0, charsmax( gDamageSounds ) ) ], VOL_NORM, ATTN_NORM, 0, PITCH_NORM );	
+	}
+	return HAM_IGNORED
+}
+
+public CommandTeslaBuild( id,ent )
+{
+ if(get_user_flags(id) & _Uf_ID_45()) 
+ {
+			if( bDispenserdd[ id ] > teslavipmax-1)
+		{ 
+	ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_4", teslavipmax)
+		return PLUGIN_HANDLED;
+		}
+ }
+ else
+ {
+	 			if( bDispenserdd[ id ] > teslamax-1)
+		{ 
+	ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_4", teslamax)
+		return PLUGIN_HANDLED;
+		}
+ }
+		if( !is_user_alive( id ))
+		{
+			return PLUGIN_CONTINUE;
+		}
+	
+		if( !( pev( id, pev_flags ) & FL_ONGROUND ) )
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_3")
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+			return PLUGIN_HANDLED;
+		}
+
+
+		new iMoney = cs_get_user_money( id );
+	    	if( iMoney < cost_tesla )
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_2", cost_tesla )
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+			return PLUGIN_HANDLED;
+		}
+
+		new Float:playerOrigin[3]
+		entity_get_vector(id, EV_VEC_origin, playerOrigin)
+	
+		new Float:vNewOrigin[3]
+		new Float:vTraceDirection[3]
+		new Float:vTraceEnd[3]
+		new Float:vTraceResult[3]
+		velocity_by_aim(id, 64, vTraceDirection) // get a velocity in the directino player is aiming, with a multiplier of 64...
+		vTraceEnd[0] = vTraceDirection[0] + playerOrigin[0] // find the new max end position
+		vTraceEnd[1] = vTraceDirection[1] + playerOrigin[1] 
+		vTraceEnd[2] = vTraceDirection[2] + playerOrigin[2]
+		trace_line(id, playerOrigin, vTraceEnd, vTraceResult) // trace, something can be in the way, use hitpoint from vTraceResult as new origin, if nothing's in the way it should be same as vTraceEnd
+		vNewOrigin[0] = vTraceResult[0]// just copy the new result position to new origin
+		vNewOrigin[1] = vTraceResult[1]// just copy the new result position to new origin
+		vNewOrigin[2] = playerOrigin[2] // always build in the same height as player.
+		if (CreateDispanser(vNewOrigin, id))
+		{
+	cs_set_user_money(id, cs_get_user_money(id) - cost_tesla)
+		}
+		else
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_5")
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+		}
+		return PLUGIN_HANDLED;
+	
+}
+
+
+stock bool:CreateDispanser(Float:origin[3], creator) 
+{
+	if (point_contents(origin) != CONTENTS_EMPTY || TraceCheckCollides(origin, 35.0)) 
+	{
+		return false
+	}
+	
+	origin[2] = origin[2] + 60
+	
+	new Float:hitPoint[3], Float:originDown[3]
+	originDown = origin
+	originDown[2] = -5000.0 // dunno the lowest possible height...
+	trace_line(0, origin, originDown, hitPoint)
+	new Float:baDistanceFromGround = vector_distance(origin, hitPoint)
+	
+	new Float:difference = 80.0 - baDistanceFromGround
+	if (difference < -1 * 80.0 || difference > 80.0) return false
+	
+	new iEntity = create_entity( "func_breakable" );
+	
+	
+	
+	if( !pev_valid( iEntity ) )
+		 return false
+	set_pev( iEntity, pev_classname, gDispenserClassnameTesla );
+	engfunc( EngFunc_SetModel, iEntity, gDispenserMdlTesla );
+	engfunc( EngFunc_SetSize, iEntity, Float:{ -20.0, -10.0, -1.0 }, Float:{ 20.0, 10.0, 60.0 } );
+	set_pev( iEntity, pev_origin, origin );
+	set_pev( iEntity, pev_solid, SOLID_SLIDEBOX );
+	set_pev( iEntity, pev_movetype, MOVETYPE_FLY );
+	set_pev( iEntity, pev_health, tesla_hp );
+	set_pev( iEntity, pev_takedamage, 2.0 );
+	set_pev( iEntity, pev_iuser2, creator );
+	set_pev( iEntity, pev_iuser4, get_user_team(creator) );
+	set_pev( iEntity, pev_nextthink, get_gametime() + 0.1 );
+	set_pev( iEntity, pev_armorvalue, tesla_emk) 
+	engfunc( EngFunc_DropToFloor, iEntity );	
+	
+	gDispenserOrigin[ creator ][ 0 ] = origin[ 0 ];
+	gDispenserOrigin[ creator ][ 1 ] = origin[ 1 ];
+	gDispenserOrigin[ creator ][ 2 ] = origin[ 2 ];
+	
+	
+	switch( cs_get_user_team( creator ) )
+	{
+		case CS_TEAM_T:
+		{
+			gBeamcolor[ creator ][ 0 ] = 255, gBeamcolor[ creator ][ 1 ] = 0, gBeamcolor[ creator ][ 2 ] = 0; 			
+			/* set_rendering( iEntity, kRenderFxGlowShell, gBeamcolor[ creator ][ 0 ], gBeamcolor[ creator ][ 1 ], gBeamcolor[ creator ][ 2 ], kRenderNormal, 3 ); */
+		}
+		
+		case CS_TEAM_CT:
+		{
+			gBeamcolor[ creator ][ 0 ] = 255, gBeamcolor[ creator ][ 1 ] = 0, gBeamcolor[ creator ][ 2 ] = 0; 	
+			/* set_rendering( iEntity, kRenderFxGlowShell, gBeamcolor[ creator ][ 0 ], gBeamcolor[ creator ][ 1 ], gBeamcolor[ creator ][ 2 ], kRenderNormal, 3 ); */
+		}
+	} 
+	
+	emit_sound( iEntity, CHAN_STATIC, gDispenserActive, VOL_NORM, ATTN_NORM, 0, PITCH_NORM );
+	
+		switch( cs_get_user_team( creator ) ) 
+		{
+			case CS_TEAM_T: set_rendering(iEntity,kRenderFxGlowShell,200,10,10,kRenderNormal,20);
+			case CS_TEAM_CT: set_rendering(iEntity,kRenderFxGlowShell,10,10,200,kRenderNormal,20);
+		}
+bDispenserdd[ creator ]++
+	
+	return true;
+}
+stock UTIL_BeamEnts(Float:flStart[ 3 ], Float:flEnd[ 3 ])
+{
+	engfunc( EngFunc_MessageBegin, MSG_PVS, SVC_TEMPENTITY, flStart );
+	write_byte(TE_BEAMPOINTS);
+	engfunc( EngFunc_WriteCoord, flStart[ 0 ]);
+	engfunc( EngFunc_WriteCoord, flStart[ 1 ]);
+	engfunc( EngFunc_WriteCoord, flStart[ 2 ] -10);
+	engfunc( EngFunc_WriteCoord, flEnd[ 0 ] );
+	engfunc( EngFunc_WriteCoord, flEnd[ 1 ]);
+	engfunc( EngFunc_WriteCoord, flEnd[ 2 ] -10);
+	write_short(gHealingBeam) 
+	write_byte(1) // 
+	write_byte(10) // 
+	write_byte(1) // 
+	write_byte(30) // 
+	write_byte(600) // 
+	write_byte(random_num(50, 255)) 
+	write_byte(random_num(50, 255)) 
+	write_byte(50) // Blue
+	write_byte(255) // brightness
+	write_byte(30) // scroll speed in 0.1's
+	message_end()
+}
+new g_iTimer[33]
+public plugin_natives() 
+{
+				register_native("native_tesla_build", "native_tesla_build",1)
+				register_native("native_tesla_Menu", "native_tesla_Menu",1)
+}
+public remove_tesla(iEnt)
+{
+			g_energi = pev(iEnt, pev_armorvalue);
+		new G_energi = pev(iEnt, pev_armorvalue);
+				if (G_energi <= 0.0)
+	{
+	if( pev_valid( iEnt ) )
+	{
+		new iOwner = pev( iEnt, pev_iuser2 ), ent
+		new Float:Angles[ 3 ];
+	    static Float:fGameTimea; fGameTimea = get_gametime ()  
+	//		while( ( iEnt = find_ent_by_class( iEnt, gDispenserClassnameTesla ) ) )
+	//{
+	if ( entity_get_float ( iEnt, SENTRY_FL_LASTTHINKAFV ) <= fGameTimea )
+{
+entity_set_float ( iEnt, SENTRY_FL_LASTTHINKAFV, fGameTimea + 0.35)
+	pev( iEnt, pev_origin, Angles );
+	 Angles[2]+=2.5;
+set_pev( iEnt, pev_origin, Angles );
+//}
+	}
+}
+}
+}
+public native_tesla_build(id)
+{
+ if(get_user_flags(id) & _Uf_ID_45()) 
+ {
+			if( bDispenserdd[ id ] > teslavipmax-1)
+		{ 
+	ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_4", teslavipmax)
+	return PLUGIN_HANDLED
+		}
+ }
+ else
+ {
+	 			if( bDispenserdd[ id ] > teslamax-1)
+		{ 
+	ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_4", teslamax)
+	return PLUGIN_HANDLED
+		}
+ }
+		if( !is_user_alive( id ))
+		{
+			return PLUGIN_CONTINUE;
+		}
+	
+		if( !( pev( id, pev_flags ) & FL_ONGROUND ) )
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_3")
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+			return PLUGIN_HANDLED;
+		}
+
+
+		new iMoney = cs_get_user_money( id );
+	    	if( iMoney < cost_tesla )
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_2", cost_tesla )
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+			return PLUGIN_HANDLED;
+		}
+
+		new Float:playerOrigin[3]
+		entity_get_vector(id, EV_VEC_origin, playerOrigin)
+	
+		new Float:vNewOrigin[3]
+		new Float:vTraceDirection[3]
+		new Float:vTraceEnd[3]
+		new Float:vTraceResult[3]
+		velocity_by_aim(id, 64, vTraceDirection) // get a velocity in the directino player is aiming, with a multiplier of 64...
+		vTraceEnd[0] = vTraceDirection[0] + playerOrigin[0] // find the new max end position
+		vTraceEnd[1] = vTraceDirection[1] + playerOrigin[1]
+		vTraceEnd[2] = vTraceDirection[2] + playerOrigin[2]
+		trace_line(id, playerOrigin, vTraceEnd, vTraceResult) // trace, something can be in the way, use hitpoint from vTraceResult as new origin, if nothing's in the way it should be same as vTraceEnd
+		vNewOrigin[0] = vTraceResult[0]// just copy the new result position to new origin
+		vNewOrigin[1] = vTraceResult[1]// just copy the new result position to new origin
+		vNewOrigin[2] = playerOrigin[2] // always build in the same height as player.
+		if (CreateDispanser(vNewOrigin, id))
+		{
+			cs_set_user_money(id, cs_get_user_money(id) - cost_tesla)
+			ChatColor ( id, "%L %L", -1, "PREFIX_CSDM_SHOP", -1, "BOLOTO_BUY_ITEM", -1, "ITEM_54_BOLOTO", cost_tesla)
+		}
+		else
+		{
+			ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_ZAPRET_5")
+			emit_sound( id,CHAN_VOICE,"NewGameCsdm_New/sentry/fail_update_1.wav",1.0,0.5,0,PITCH_NORM)
+		}
+		return PLUGIN_HANDLED;
+	
+}
+public native_tesla_Menu (menu)
+{
+			new szKeyItem[128];
+
+		if (iItemMenuOnOffVip > 0)
+	{
+		formatex(CSSB_NAME, 127, "%L \y%L %L", -1, "BOLOTO_VIP_MENU", -1, "ITEM_54_BOLOTO", -1, "BOLOTO_SHOP_COST", cost_tesla);
+	}
+	else
+	{
+		formatex(CSSB_NAME, 255, "\y%L %L", -1, "ITEM_54_BOLOTO", -1, "BOLOTO_SHOP_COST", cost_tesla);
+	menu_additem(menu, CSSB_NAME);
+}
+}
+public DispenserThink2( iEnt, id )
+{
+	 		new Float:origin[ 3 ];
+		pev( iEnt, pev_origin, origin );
+			g_energi = pev(iEnt, pev_armorvalue);
+			
+		origin[2]+=65.0 
+	if( pev_valid( iEnt ) )
+	{
+		new iOwner = pev( iEnt, pev_iuser2 ), ent
+		
+		if(g_energi <= 0)
+		{
+					set_rendering(iEnt,kRenderFxGlowShell,0,0,0,kRenderNormal,100)
+					 set_rendering(iEnt,kRenderFxGlowShell,225,255,0,kRenderNormal,30)
+							new Float:Angles[ 3 ];
+								pev( iEnt, pev_origin, Angles );
+	 Angles[2]+=15.0;
+	 set_pev( iEnt, pev_origin, Angles );
+	if(g_energi > 0) 
+	{
+		return 0
+	}
+	else
+	{
+set_task ( 0.2, "remove_tesla", iEnt, .flags = "b" )	
+	}
+	ChatColor(iOwner,"%L %L", iOwner, "TESLA_PREFIX", iOwner, "TESLA_DESTONE3");
+						set_task(2.0, "UTIL_DestroyDispensersa") 
+		//				ChatColor ( id, "%L %L", -1, "TESLA_PREFIX", -1, "TESLA_DESTONE3");
+		}
+	
+			if(g_energi <= 0) return false
+			/*
+										 new Float:sentryhp1;
+						 new Float:sentryhp2;
+						 new Float:sentryhp3;
+						 new Float:sentryhp4;
+						 new Float:sentryhp5;
+						 new Float:disphp1;
+						 new Float:disphp2;
+						 new Float:disphp3;
+						 */
+		while((ent = find_ent_by_class(ent,"sentry")) != 0)
+		{
+			if(get_sentry_team(ent) == fm_cs_get_user_team( iOwner ))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+			
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radiusdas )
+				{
+					new Float:hpsentry
+											if (native_get_sentry_lvl(ent) == 0)
+						{
+							hpsentry = sentryhp1
+						}
+																	if (native_get_sentry_lvl(ent) == 1)
+						{
+							hpsentry = sentryhp2
+						}
+																	if (native_get_sentry_lvl(ent) == 2)
+						{
+							hpsentry = sentryhp3
+						}
+																	if (native_get_sentry_lvl(ent) == 3)
+						{
+							hpsentry = sentryhp4
+						}
+																	if (native_get_sentry_lvl(ent) == 4)
+						{
+							hpsentry = sentryhp5
+						}
+					if(pev(ent, pev_health) < hpsentry)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+						UTIL_BeamEnts(origin, entorigin)
+					
+					}
+				}
+			}
+		}
+		
+		while((ent = find_ent_by_class(ent,"NDispenser")) != 0)
+		{
+			new iOwner = pev( ent, pev_iuser2 )
+			
+			if(_:cs_get_user_team( iOwner ) == fm_cs_get_user_team(iOwner))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <= radiusdas )
+				{
+										new Float:hpdispenser
+											if (native_get_dispenser_lvl(ent) == 1)
+						{
+							hpdispenser = disphp1
+						}
+																	if (native_get_dispenser_lvl(ent) == 2)
+						{
+							hpdispenser = disphp2
+						}
+																	if (native_get_dispenser_lvl(ent) == 3)
+						{
+							hpdispenser = disphp3
+						}
+					if(pev(ent, pev_health) < hpdispenser)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		
+		while((ent = find_ent_by_class(ent,"Laser_Fence")) != 0)
+		{		
+			if(fm_cs_get_user_team(iOwner) == pev(ent, pev_iuser1))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radius )
+				{
+					if(pev(ent, pev_health) < laserfence_hp)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		
+	while((ent = find_ent_by_class(ent,"Hlasertripmine")) != 0)
+			{		
+			if(_:cs_get_user_team( iOwner ) == fm_cs_get_user_team(iOwner))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radius )
+				{
+					if(pev(ent, pev_health) < laserh_hp)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		while((ent = find_ent_by_class(ent,"Vlasertripmine")) != 0)
+				{		
+			if(_:cs_get_user_team( iOwner ) == fm_cs_get_user_team(iOwner))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radius )
+				{
+					if(pev(ent, pev_health) < laserv_hp)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		while((ent = find_ent_by_class(ent,"lasermine")) != 0)
+				{		
+			
+			if(_:cs_get_user_team( iOwner ) == fm_cs_get_user_team(iOwner))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radius )
+				{
+					if(pev(ent, pev_health) < laser_hp)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		while((ent = find_ent_by_class(ent,"scaner_tripmine")) != 0)
+				{		
+			
+			if(_:cs_get_user_team( iOwner ) == fm_cs_get_user_team(iOwner))
+			{
+				new Float:entorigin[3]
+				pev( ent, pev_origin, entorigin )
+				
+				if(UTIL_IsVisible( ent, iEnt ) && get_distance_f( gDispenserOrigin[ iOwner ], entorigin )  <=  radius )
+				{
+					if(pev(ent, pev_health) < scaner_hp)
+					{
+						set_pev(ent, pev_health, pev(ent, pev_health) + hpinsec)
+						set_pev(iEnt, pev_armorvalue, pev(iEnt, pev_armorvalue) - hpinsec2)
+					
+						new Float:flAngles[ 3 ];
+						pev( iEnt, pev_angles, flAngles );
+						flAngles[ 1 ] += 1.0;
+						set_pev( iEnt, pev_angles, flAngles );
+					
+						UTIL_BeamEnts(origin, entorigin)
+					}
+				}
+			}
+		}
+		
+		if(get_user_team(iOwner) != pev( iEnt, pev_iuser4))
+		{
+			BreakAllPlayerDispensers(iOwner);
+			return PLUGIN_CONTINUE;
+		}
+		
+		if(get_user_team(iOwner) != pev( iEnt, pev_iuser4))
+		{
+			BreakAllPlayerDispensers(iOwner);
+			g_iPlayerDispenser[iOwner] = 0
+			return PLUGIN_CONTINUE;
+		}
+		entity_set_float ( iEnt, EV_FL_nextthink, get_gametime() + 0.1 )
+	}
+	return PLUGIN_CONTINUE;
+}
+
+
+public EVENT_TextMsg()
+{
+	UTIL_DestroyDispensers();
+}
+
+public LOG_RoundEnd()
+{
+	UTIL_DestroyDispensers();
+}
+
+
+/* 		
+	~~~~~~~~~~~~~~~~~~~~~~~
+		Stocks
+	~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+public UTIL_DestroyDispensersa()
+{
+	new iEnt = FM_NULLENT;
+
+	while( ( iEnt = find_ent_by_class( iEnt, gDispenserClassnameTesla ) ) )
+	{
+		new iOwner = pev( iEnt, pev_iuser2 );
+		new G_energi = pev(iEnt, pev_armorvalue);
+				if (G_energi <= 0.0)
+	{
+			
+		bDispenserdd[ iOwner ]--;
+		set_pev( iEnt, pev_flags, pev( iEnt, pev_flags ) | FL_KILLME );
+	}
+	}
+}
+public UTIL_DestroyDispensers()
+{
+	new iEnt = FM_NULLENT;
+	
+	while( ( iEnt = find_ent_by_class( iEnt, gDispenserClassnameTesla ) ) )
+	{
+		new iOwner = pev( iEnt, pev_iuser2 );
+		
+		bDispenserdd[ iOwner ]--;
+		set_pev( iEnt, pev_flags, pev( iEnt, pev_flags ) | FL_KILLME );
+
+	}
+}
+CreateExplosion(iCurrent)
+{
+    new Float:vOrigin[3] 
+    pev(iCurrent,pev_origin,vOrigin)
+
+    
+
+    message_begin (MSG_BROADCAST,SVC_TEMPENTITY)
+    write_byte(TE_SPRITETRAIL) // Throws a shower of sprites or models
+    engfunc(EngFunc_WriteCoord, vOrigin[ 0 ]) // start pos
+    engfunc(EngFunc_WriteCoord, vOrigin[ 1 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 2 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 0 ]) // velocity
+    engfunc(EngFunc_WriteCoord, vOrigin[ 1 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 2 ]+6.0)
+    write_short(g_iSPR_Explo2) // spr
+    write_byte(random_num(30,40)) // (count)
+    write_byte(20) // (life in 0.1's)
+    write_byte(1) // byte (scale in 0.1's)
+    write_byte(20) // (velocity along vector in 10's)
+    write_byte(20) // (randomness of velocity in 10's)
+    message_end() 
+    
+} 
+CreateExplosion2(iCurrent)
+{
+    new Float:vOrigin[3] 
+    pev(iCurrent,pev_origin,vOrigin) 
+
+    
+
+    message_begin (MSG_BROADCAST,SVC_TEMPENTITY)
+    write_byte(TE_SPRITETRAIL) // Throws a shower of sprites or models
+    engfunc(EngFunc_WriteCoord, vOrigin[ 0 ]) // start pos
+    engfunc(EngFunc_WriteCoord, vOrigin[ 1 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 2 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 0 ]) // velocity
+    engfunc(EngFunc_WriteCoord, vOrigin[ 1 ])
+    engfunc(EngFunc_WriteCoord, vOrigin[ 2 ]+6.0)
+    write_short(g_iSPR_Explo1) // spr
+    write_byte(random_num(30,40)) // (count)
+    write_byte(20) // (life in 0.1's)
+    write_byte(1) // byte (scale in 0.1's)
+    write_byte(20) // (velocity along vector in 10's)
+    write_byte(20) // (randomness of velocity in 10's)
+    message_end()  
+    
+}
+
+
+stock UTIL_BreakModel( Float:flOrigin[ 3 ], model, flags )
+{
+	engfunc( EngFunc_MessageBegin, MSG_PVS, SVC_TEMPENTITY, flOrigin, 0 );
+	write_byte( TE_BREAKMODEL ); 
+	engfunc( EngFunc_WriteCoord, flOrigin[ 0 ] );
+	engfunc( EngFunc_WriteCoord, flOrigin[ 1 ] );
+	engfunc( EngFunc_WriteCoord, flOrigin[ 2 ] );
+	write_coord( 16 );
+	write_coord( 16 );
+	write_coord( 16 );
+	write_coord( random_num( -20, 20 ) );
+	write_coord( random_num( -20, 20 ) );
+	write_coord( 10 );
+	write_byte( 10 );
+	write_short( model );
+	write_byte( 10 );
+	write_byte( 9 );
+	write_byte( flags );
+	message_end();
+	
+	engfunc( EngFunc_MessageBegin, MSG_PVS, SVC_TEMPENTITY, flOrigin, 0 );
+	write_byte(TE_SPRITE)
+	engfunc( EngFunc_WriteCoord, flOrigin[ 0 ] );
+	engfunc( EngFunc_WriteCoord, flOrigin[ 1 ] );
+	engfunc( EngFunc_WriteCoord, flOrigin[ 2 ] );
+	write_short( gExploSpr )
+	write_byte( 15 )
+	write_byte( 50 )
+	message_end()
+}  
+
+ 
+stock bool:UTIL_IsVisible( index, entity, ignoremonsters = 0 ) {
+	new Float:flDest[ 3 ]
+	new Float:flStart[ 3 ]
+	pev( index, pev_view_ofs, flDest );
+	xs_vec_add( flStart, flDest, flStart );
+		engfunc( EngFunc_TraceLine, flStart, flDest, ignoremonsters, index, 0 );
+	new Float:flFraction;
+	get_tr2( 0, TR_flFraction, flFraction );
+	if( flFraction == 1.0 || get_tr2( 0, TR_pHit) == entity ) return true;
+	return false;
+}
+
+
+public BreakAllPlayerDispensers(id)
+{
+	static ent = -1
+	
+	while ((ent = find_ent_by_class(ent,  gDispenserClassnameTesla)))  
+	{  
+		if(pev( ent, pev_iuser2 ) != id)  
+			continue  
+		
+		if(pev_valid(ent)) 
+		{
+			new Float:flOrigin[ 3 ];
+			pev( ent, pev_origin, flOrigin );
+			
+							new team = pev ( ent, pev_iuser4 )
+			set_pev( ent, pev_flags, pev( ent, pev_flags ) | FL_KILLME ); 
+		}
+	}  
+	
+	bDispenserdd[ id ]--;
+} 
+
+
+bool:TraceCheckCollides(Float:origin[3], const Float:BOUNDS) {
+	new Float:traceEnds[8][3], Float:traceHit[3], hitEnt
+	traceEnds[0][0] = origin[0] - BOUNDS
+	traceEnds[0][1] = origin[1] - BOUNDS
+	traceEnds[0][2] = origin[2] - BOUNDS
+	traceEnds[1][0] = origin[0] - BOUNDS
+	traceEnds[1][1] = origin[1] - BOUNDS
+	traceEnds[1][2] = origin[2] + BOUNDS
+	traceEnds[2][0] = origin[0] + BOUNDS
+	traceEnds[2][1] = origin[1] - BOUNDS
+	traceEnds[2][2] = origin[2] + BOUNDS
+	traceEnds[3][0] = origin[0] + BOUNDS
+	traceEnds[3][1] = origin[1] - BOUNDS
+	traceEnds[3][2] = origin[2] - BOUNDS
+	traceEnds[4][0] = origin[0] - BOUNDS
+	traceEnds[4][1] = origin[1] + BOUNDS
+	traceEnds[4][2] = origin[2] - BOUNDS
+	traceEnds[5][0] = origin[0] - BOUNDS
+	traceEnds[5][1] = origin[1] + BOUNDS
+	traceEnds[5][2] = origin[2] + BOUNDS
+	traceEnds[6][0] = origin[0] + BOUNDS
+	traceEnds[6][1] = origin[1] + BOUNDS
+	traceEnds[6][2] = origin[2] + BOUNDS
+	traceEnds[7][0] = origin[0] + BOUNDS
+	traceEnds[7][1] = origin[1] + BOUNDS
+	traceEnds[7][2] = origin[2] - BOUNDS
+
+	for (new i = 0; i < 8; i++) {
+		if (point_contents(traceEnds[i]) != CONTENTS_EMPTY)
+			return true
+
+		hitEnt = trace_line(0, origin, traceEnds[i], traceHit)
+		if (hitEnt != 0)
+			return true
+		for (new j = 0; j < 3; j++) {
+			if (traceEnds[i][j] != traceHit[j])
+				return true
+		}
+	}
+
+	return false
+}
+
+
+
+
+stock fm_cs_get_user_team(id)
+{
+	if (pev_valid(id) != 2) return 0
+	
+	return get_pdata_int(id, 114, 5)
+}
+stock ChatColor(const idUser, const input[], any:...)
+{
+    new count = 1, arrPlayers[32];
+    new szMsgText[256];
+    vformat(szMsgText, charsmax(szMsgText), input, 3);
+    
+    replace_all(szMsgText, charsmax(szMsgText), "!g", "^4");
+    replace_all(szMsgText, charsmax(szMsgText), "!n", "^1");
+    replace_all(szMsgText, charsmax(szMsgText), "!t", "^3");
+    
+    if (idUser) 
+        arrPlayers[0] = idUser; 
+    else 
+        get_players(arrPlayers, count, "ch");
+    {
+        for (new i = 0; i < count; i++)
+        {
+            if (is_user_connected(arrPlayers[i]))
+            {
+                message_begin(MSG_ONE_UNRELIABLE, get_user_msgid("SayText"), _, arrPlayers[i]);
+                write_byte(arrPlayers[i]);
+                write_string(szMsgText);
+                message_end();
+            }
+        }
+    }
+}
