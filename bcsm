@@ -1,0 +1,3063 @@
+#include <amxmodx>
+#include <cstrike>
+#include <fun>
+#include <fakemeta>
+#include <hamsandwich>
+#include <colorchat2>
+#include <knife\advanced>
+#include <grenade_key>
+#include <deathrun>
+#include <bolotocsdm>
+#include <dhudmessage>
+
+#define PLUGIN "[MG] SHOP"
+#define VERSION "1.0"
+#define AUTHOR "Nickron"
+
+#define sentryon // Р”РћР‘РђР’Р¬РўР• Р­РўРЈ РЎРўР РћРљРЈ Р—Р”Р•РЎР¬!
+
+#if defined sentryon
+native native_Sentry_Menu(id, menu);
+native native_Sentry_Build(id);
+#endif
+
+new name[31]; 
+new szThreeJump[33], szThreeJumpNum[33], szDoThreeJump[33];
+new String:CSSB_NAME[68] = "Shop Menu";
+new ammo_item_On_Off, ammo_item_cost, ammo_iItemMenuOnOffVip, ammo_ItemMenuVipFlag [64], grenade_item_On_Off, grenade_item_cost, grenade_iItemMenuOnOffVip,grenade_ItemMenuVipFlag [64];
+new iChoice[58];
+new ak47number[10];
+new bazookanumber[2];
+new m4a1number[10];
+new deaglenumber[10];
+new awpnumber[10];
+new lasernumber[5];
+new galilnumber[3];
+new ssg550number[1];
+new m249number[3];
+new ezmenu;
+
+public plugin_precache()
+{
+		new iFile = fopen("addons/amxmodx/configs/SupremeJ/shopcsdm/shop/shopcsdm.cfg", "rt");
+	if(iFile){
+		new szLineBuffer[600]
+		while(!(feof(iFile))){
+			fgets(iFile, szLineBuffer, charsmax(szLineBuffer));
+				
+			if(!(szLineBuffer[0]) || szLineBuffer[0] == ';' || szLineBuffer[0] == '#')
+			{
+				continue;
+			}
+			new Imeil[600]
+			new Model[600]
+			
+			parse(szLineBuffer, Imeil, charsmax(Imeil),Model, charsmax(Model));
+											if (equal(Imeil, "EASY_MENU_CSDM_ON_OFF"))
+					{
+						ezmenu = str_to_num(Model);
+					}
+					if (equal(Imeil, "AMMO_ITEM_MENU_ON_OFF"))
+					{
+						ammo_item_On_Off = str_to_num(Model);
+					}
+					else
+					{
+						if (equal(Imeil, "AMMO_COST"))
+						{
+							ammo_item_cost = str_to_num(Model);
+						}
+						if (equal(Imeil, "AMMO_ITEM_MENU_ON_OFF_VIP"))
+						{
+							ammo_iItemMenuOnOffVip = str_to_num(Model);
+						}
+						if (equal(Imeil, "AMMO_ITEM_MENU_VIP_FLAG"))
+						{
+							copy(ammo_ItemMenuVipFlag, 63, Model);
+						}	
+		}
+							if (equal(Imeil, "GRENADE_ITEM_MENU_ON_OFF"))
+					{
+						grenade_item_On_Off = str_to_num(Model);
+					}
+					else
+					{
+						if (equal(Imeil, "GRENADE_COST"))
+						{
+							grenade_item_cost = str_to_num(Model);
+						}
+						if (equal(Imeil, "GRENADE_ITEM_MENU_ON_OFF_VIP"))
+						{
+							grenade_iItemMenuOnOffVip = str_to_num(Model);
+						}
+						if (equal(Imeil, "GRENADE_ITEM_MENU_VIP_FLAG"))
+						{
+							copy(grenade_ItemMenuVipFlag, 63, Model);
+						}	
+		}
+		}
+	}
+new iFileb = fopen("addons/amxmodx/configs/SupremeJ/shopcsdm/shop/shopcsdmsettings.ini", "rt");
+if(iFileb){
+    new szLineBuffer[600]
+    while(!(feof(iFileb))){
+        fgets(iFileb, szLineBuffer, charsmax(szLineBuffer));
+            
+        if(!(szLineBuffer[0]) || szLineBuffer[0] == ';' || szLineBuffer[0] == '#')
+        {
+            continue;
+        }
+        new Imeil[600]
+        new Model[600]
+        parse(szLineBuffer, Imeil, charsmax(Imeil),Model, charsmax(Model));
+        
+        // РћСЃРЅРѕРІРЅС‹Рµ РїСЂРµРґРјРµС‚С‹ Рё СѓСЃС‚СЂРѕР№СЃС‚РІР°
+        if (equal(Imeil, "TESLA_KEY"))
+        {
+            iChoice[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LASER_KEY"))
+        { 
+            iChoice[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LASERFENCE_KEY"))
+        {
+            iChoice[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "SENTRY_KEY"))
+        {
+            iChoice[3] = str_to_num(Model);
+            #define sentryon 
+        }
+        if (equal(Imeil, "DISPENSER_KEY"))
+        {
+            iChoice[4] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LMV_KEY"))
+        {
+            iChoice[5] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LMH_KEY"))
+        {
+            iChoice[6] = str_to_num(Model);
+        }
+        if (equal(Imeil, "SCANER_KEY"))
+        {
+            iChoice[7] = str_to_num(Model);
+        }
+        if (equal(Imeil, "BAZOOKA_KEY"))
+        {
+            iChoice[8] = str_to_num(Model);
+        }
+        if (equal(Imeil, "GOLD_BAZOOKA_KEY"))
+        {
+            iChoice[9] = str_to_num(Model);
+        }
+        
+        // AK47 - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "AK47_KEY_NUM1"))
+        {
+            iChoice[10] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_NUM2"))
+        {
+            iChoice[11] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_NUM3"))
+        {
+            iChoice[12] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_NUM4"))
+        {
+            iChoice[13] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_NUM5"))
+        {
+            iChoice[14] = str_to_num(Model);
+        }
+        
+        // M4A1 - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "M4A1_KEY_NUM1"))
+        {
+            iChoice[15] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_NUM2"))
+        {
+            iChoice[16] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_NUM3"))
+        {
+            iChoice[17] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_NUM4"))
+        {
+            iChoice[18] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_NUM5"))
+        {
+            iChoice[19] = str_to_num(Model);
+        }
+        
+        // AWP - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ (РёСЃРїСЂР°РІР»РµРЅ Р±Р°Рі)
+        if (equal(Imeil, "AWP_KEY_NUM1"))
+        {
+            iChoice[20] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_NUM2"))
+        {
+            iChoice[21] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_NUM3"))
+        {
+            iChoice[22] = str_to_num(Model); // РСЃРїСЂР°РІР»РµРЅ Р±Р°Рі - Р±С‹Р»Рѕ [31]
+        }
+        if (equal(Imeil, "AWP_KEY_NUM4"))
+        {
+            iChoice[23] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_NUM5"))
+        { 
+            iChoice[24] = str_to_num(Model);
+        }
+        
+        // DEAGLE - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "DEAGLE_KEY_NUM1"))
+        {
+            iChoice[25] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_NUM2"))
+        {
+            iChoice[26] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_NUM3"))
+        {
+            iChoice[27] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_NUM4"))
+        {
+            iChoice[28] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_NUM5"))
+        {
+            iChoice[29] = str_to_num(Model);
+        }
+        
+        // GALIL - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (3 РІР°СЂРёР°РЅС‚Р°)
+        if (equal(Imeil, "GALIL_KEY_NUM1"))
+        {
+            iChoice[30] = str_to_num(Model);
+        }
+        if (equal(Imeil, "GALIL_KEY_NUM2"))
+        {
+            iChoice[31] = str_to_num(Model);
+        }
+        if (equal(Imeil, "GALIL_KEY_NUM3"))
+        {
+            iChoice[32] = str_to_num(Model);
+        }
+        
+        // SSG - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (1 РІР°СЂРёР°РЅС‚)
+        if (equal(Imeil, "SSG_KEY_NUM1"))
+        {
+            iChoice[33] = str_to_num(Model);
+        }
+        
+        // M249 - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (3 РІР°СЂРёР°РЅС‚Р°)
+        if (equal(Imeil, "M249_KEY_NUM1"))
+        {
+            iChoice[34] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M249_KEY_NUM2"))
+        {
+            iChoice[35] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M249_KEY_NUM3"))
+        {
+            iChoice[36] = str_to_num(Model);
+        }
+        
+        // РЎРїРµС†РёР°Р»СЊРЅС‹Рµ РїСЂРµРґРјРµС‚С‹
+        if (equal(Imeil, "INFINITYAMMO_KEY"))
+        {
+            iChoice[37] = str_to_num(Model);
+        }
+        if (equal(Imeil, "ALLGRENADE_KEY"))
+        {
+            iChoice[38] = str_to_num(Model);
+        }
+        
+        // BAZOOKA MENU - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (2 РІР°СЂРёР°РЅС‚Р°)
+        if (equal(Imeil, "BAZOOKA_KEY_MENU1"))
+        {
+            bazookanumber[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "BAZOOKA_KEY_MENU2"))
+        {
+            bazookanumber[1] = str_to_num(Model);
+        }
+        
+        // AK47 MENU - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "AK47_KEY_MENU1"))
+        {
+            ak47number[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_MENU2"))
+        {
+            ak47number[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_MENU3"))
+        {
+            ak47number[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_MENU4"))
+        {
+            ak47number[3] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AK47_KEY_MENU5"))
+        {
+            ak47number[4] = str_to_num(Model);
+        }
+        
+        // M4A1 MENU - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "M4A1_KEY_MENU1"))
+        {
+            m4a1number[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_MENU2"))
+        {
+            m4a1number[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_MENU3"))
+        {
+            m4a1number[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_MENU4"))
+        {
+            m4a1number[3] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M4A1_KEY_MENU5"))
+        {
+            m4a1number[4] = str_to_num(Model);
+        }
+        
+        // DEAGLE MENU - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "DEAGLE_KEY_MENU1"))
+        {
+            deaglenumber[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_MENU2"))
+        {
+            deaglenumber[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_MENU3"))
+        {
+            deaglenumber[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_MENU4"))
+        {
+            deaglenumber[3] = str_to_num(Model);
+        }
+        if (equal(Imeil, "DEAGLE_KEY_MENU5"))
+        {
+            deaglenumber[4] = str_to_num(Model);
+        }
+        
+        // AWP MENU - СЃРѕРєСЂР°С‰РµРЅРѕ РґРѕ 5 РІР°СЂРёР°РЅС‚РѕРІ
+        if (equal(Imeil, "AWP_KEY_MENU1"))
+        {
+            awpnumber[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_MENU2"))
+        {
+            awpnumber[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_MENU3"))
+        {
+            awpnumber[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_MENU4"))
+        {
+            awpnumber[3] = str_to_num(Model);
+        }
+        if (equal(Imeil, "AWP_KEY_MENU5"))
+        {
+            awpnumber[4] = str_to_num(Model);
+        }
+        
+        // LASER MENU
+        if (equal(Imeil, "LASER_KEY_MENU"))
+        {
+            lasernumber[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LMV_KEY_MENU"))
+        {
+            lasernumber[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LMH_KEY_MENU"))
+        {
+            lasernumber[2] = str_to_num(Model);
+        }
+        if (equal(Imeil, "SCANER_KEY_MENU"))
+        {
+            lasernumber[3] = str_to_num(Model);
+        }
+        if (equal(Imeil, "LASERFENCE_KEY_MENU"))
+        {
+            lasernumber[4] = str_to_num(Model);
+        }
+        
+        // GALIL MENU - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (3 РІР°СЂРёР°РЅС‚Р°)
+        if (equal(Imeil, "GALIL_KEY_MENU1"))
+        {
+            galilnumber[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "GALIL_KEY_MENU2"))
+        {
+            galilnumber[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "GALIL_KEY_MENU3"))
+        {
+            galilnumber[2] = str_to_num(Model);
+        }
+        
+        // SSG550 MENU - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (1 РІР°СЂРёР°РЅС‚)
+        if (equal(Imeil, "SSG550_KEY_MENU1"))
+        {
+            ssg550number[0] = str_to_num(Model);
+        }
+        
+        // M249 MENU - РѕСЃС‚Р°РІР»РµРЅРѕ РєР°Рє Р±С‹Р»Рѕ (3 РІР°СЂРёР°РЅС‚Р°)
+        if (equal(Imeil, "M249_KEY_MENU1"))
+        {
+            m249number[0] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M249_KEY_MENU2"))
+        {
+            m249number[1] = str_to_num(Model);
+        }
+        if (equal(Imeil, "M249_KEY_MENU3"))
+        {
+            m249number[2] = str_to_num(Model);
+        }  // <- РґРѕР±Р°РІР»РµРЅР° Р·Р°РєСЂС‹РІР°СЋС‰Р°СЏ СЃРєРѕР±РєР°
+    }
+}
+    fclose(iFileb);
+}
+
+public plugin_init()
+{
+    register_plugin(PLUGIN, VERSION, AUTHOR);
+
+    if (ezmenu < 1)
+    {
+        register_concmd("say /csm", "Menu_hook");
+        register_concmd("say csm", "Menu_hook");
+        register_concmd("/csm", "Menu_hook");
+        register_concmd("csm", "Menu_hook");
+        register_concmd("nightvision", "Menu_hook");
+        RegisterHam(Ham_Spawn, "player", "fwdHamPlayerSpawn", 1); // РСЃРїСЂР°РІР»РµРЅРѕ: true -> 1
+        // cssbMenu(); // Р’СЂРµРјРµРЅРЅРѕ Р·Р°РєРѕРјРјРµРЅС‚РёСЂРѕРІР°РЅРѕ - С„СѓРЅРєС†РёСЏ РЅРµ РЅР°Р№РґРµРЅР°
+    }
+    else
+    {
+        register_concmd("say /csm", "Menu_hooksik"); // Р’РѕР·РІСЂР°С‰РµРЅРѕ Menu_hooksik
+        register_concmd("say csm", "Menu_hooksik");  // С‚Р°Рє РєР°Рє С„СѓРЅРєС†РёСЏ СЃСѓС‰РµСЃС‚РІСѓРµС‚ РЅРёР¶Рµ
+        register_concmd("/csm", "Menu_hooksik");
+        register_concmd("csm", "Menu_hooksik");
+        register_concmd("nightvision", "Menu_hooksik");
+        RegisterHam(Ham_Spawn, "player", "fwdHamPlayerSpawn", 1); // РСЃРїСЂР°РІР»РµРЅРѕ: true -> 1
+    }
+}
+
+public Menu_hooksik(id)
+{
+    if (ezmenu < 1) return PLUGIN_HANDLED;
+
+    new menu = menu_create("CSSB РњР°РіР°Р·РёРЅ CSDM \RР¦РµРЅР° $", "menu_hooksik_handler");
+
+    mfAddGrenadeMenu(menu);
+
+    // Р—РђРљРћРњРњР•РќРўРР РЈР™РўР• Р­РўРЈ РЎРўР РћРљРЈ:
+    /*
+    #if defined sentryon
+    native native_Sentry_Menu(id, menu);
+    #endif
+    */
+
+    registerbazooka(menu);
+    mfAddAmmoMenu(menu);
+
+  //  registersm249_2(menu);
+
+    registerawp_1(menu);
+    registerak47_1(menu);
+
+    registerm4a1_1(menu);
+    registerm4a1_2(menu);
+
+    registerawp_2(menu);
+    registerak47_2(menu);
+    registerak47_3(menu);
+    registerak47_4(menu);
+    registerak47_5(menu);
+    registergalil_1(menu);
+    registersm249_1(menu);
+    registerdeagle_1(menu);
+    registerssg550_1(menu);
+
+    menu_setprop(menu, MPROP_NEXTNAME, "Р”Р°Р»РµРµ");
+    menu_setprop(menu, MPROP_BACKNAME, "РќР°Р·Р°Рґ");
+    menu_setprop(menu, MPROP_EXITNAME, "\rР’С‹С…РѕРґ");
+    menu_setprop(menu, MPROP_EXIT, MEXIT_ALL);
+    menu_display(id, menu, 0);
+
+    return PLUGIN_HANDLED;
+}
+
+// РћР±СЂР°Р±РѕС‚С‡РёРє РЅРѕРІРѕРіРѕ СЃС‚РёР»СЏ РјРµРЅСЋ
+public menu_hooksik_handler(id, menu, item)
+{
+    if (item == MENU_EXIT)
+    {
+        menu_destroy(menu);
+        return PLUGIN_HANDLED;
+    }
+
+    // Р’С‹Р·С‹РІР°РµРј СЃС‚Р°СЂСѓСЋ Р»РѕРіРёРєСѓ РѕР±СЂР°Р±РѕС‚РєРё
+    menu_hooksik_old_handler(id, menu, item);
+
+    menu_destroy(menu);
+    return PLUGIN_HANDLED;
+}
+
+// РџР•Р Р•РРњР•РќРћР’Р«Р’РђР•Рњ СЃС‚Р°СЂСѓСЋ С„СѓРЅРєС†РёСЋ menu_hooksik РІ menu_hooksik_old_handler
+public menu_hooksik_old_handler(id, menu, key)
+{
+    if (ezmenu < 1) return PLUGIN_HANDLED;
+
+    key++; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+
+    if(key==1) Command_GiveGrenade(id);
+    if(key==2) native_Laser_build(id);
+    #if defined sentryon
+    if(key==3) native_Sentry_Build(id);
+    #endif
+    if(key==4) native_Dispenser_Build(id);
+    if(key==5) client_cmd(id,"rpg");
+    if(key==6) Command_GiveAmmo(id);
+ //   if(key==7) karo4eday_m249_2(id);
+    if(key==8) karo4eday_awp_1(id);
+    if(key==9) karo4eday_ak47_1(id);
+    if(key==10) karo4eday_m4a1_1(id);
+    if(key==11) karo4eday_m4a1_2(id);
+    if(key==12) karo4eday_awp_2(id);
+    if(key==13) karo4eday_ak47_2(id);
+    if(key==14) karo4eday_ak47_3(id);
+    if(key==15) karo4eday_ak47_4(id);
+    if(key==16) karo4eday_ak47_5(id);
+    if(key==17) karo4eday_galil_1(id);
+    if(key==18) karo4eday_m249_1(id);
+    if(key==19) karo4eday_deagle_1(id);
+    if(key==20) karo4eday_ssg550_1(id);
+
+    return PLUGIN_HANDLED;
+}
+
+// РћСЃРЅРѕРІРЅРѕР№ РѕР±СЂР°Р±РѕС‚С‡РёРє РјРµРЅСЋ РґР»СЏ ezmenu < 1
+
+
+// РћР±СЂР°Р±РѕС‚С‡РёРє РїРѕСЏРІР»РµРЅРёСЏ РёРіСЂРѕРєР°
+public fwdHamPlayerSpawn(id)
+{
+    if (!is_user_alive(id) || !is_user_connected(id))
+        return HAM_IGNORED;
+
+    return HAM_IGNORED;
+}
+/////////[Р°РІС‚РѕРјР°С‚С‹]/////////
+//[ak47]
+
+new g_spamOFF[33]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+public plugin_natives()
+{
+    register_native("Command_GiveAmmo", "Command_GiveAmmo", 1);
+}
+#define MAX_MENU 30
+#define MAX_ARG 30
+new szNameMenu_Client[MAX_MENU][256];   // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szCmdMenu_Client[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szSubMenu_Client[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szFlagsMenu_Client[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new idMainMenu_Client[MAX_MENU] = 0;    // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new idMainMenu_Num[MAX_MENU] = 0;       // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new iMenuClientNum = 0;                 // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+
+
+//Admin Menus
+new szNameMenu_Admin[MAX_MENU][256];    // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szCmdMenu_Admin[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szSubMenu_Admin[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new szFlagsMenu_Admin[MAX_MENU][MAX_ARG][256]; // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new idMainMenu_Admin[MAX_MENU] = 0;     // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+new iMenuAdminNum = 0;                  // Р”РѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+
+// Р’С‚РѕСЂРѕРµ РѕРїСЂРµРґРµР»РµРЅРёРµ Menu_hook(id) Р±С‹Р»Рѕ РЈР”РђР›Р•РќРћ/Р—РђРљРћРњРњР•РќРўРР РћР’РђРќРћ
+// С‚Р°Рє РєР°Рє РѕРЅРѕ РІС‹Р·С‹РІР°РµС‚ РѕС€РёР±РєСѓ "redefinition of function".
+/*
+public Menu_hook(id)
+{
+    menu_display( id, idMainMenu_Client[1], 0);
+
+    return PLUGIN_HANDLED;
+}
+*/
+
+cssbMenu()
+{
+
+new id = 0 //read_data ( 1 )
+	new szNameFileread[256] = "addons/amxmodx/configs/SupremeJ/shopcsdm/shop/shopcsdmsettings.ini";
+		
+	if(file_exists(szNameFileread) == 1)
+	{
+		new iLine = 0;
+		new szDataString[256] = "\0";
+		new iLengthText = 0;
+		new szTypeSection[32];
+		new iNumItem  = 0;
+		
+		while((iLine =read_file(szNameFileread,iLine,szDataString,255,iLengthText))!=0)
+		{
+			if(equali(szDataString,";",1)  || equali(szDataString,"//",2) || (strlen(szDataString) == 0) )
+				continue;
+			
+			new szLeft[256];
+			new szRight[256];
+			split(szDataString, szLeft, 255, szRight, 255, "=");
+						new Imeil[600]
+			new Model[600]
+			parse(szNameFileread, Imeil, charsmax(Imeil),Model, charsmax(Model));
+			copy(szTypeSection,31,szLeft);
+			if(equali(szTypeSection,"[MENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hook");
+			}
+			if(equali(szTypeSection,"all_grenades"))
+			{
+				mfAddGrenadeMenu (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"inf_ammo"))
+			{
+				mfAddAmmoMenu (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"laser"))
+			{
+				native_Laser_Menu (id, idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"lmv"))
+			{
+				native_VLaser_Menu (id, idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"lmh"))
+			{
+				native_HLaser_Menu (id, idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"scaner"))
+			{
+				native_scaner_Menu (id, idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"laser_fence"))
+			{
+				menulaserfence (id, idMainMenu_Client[iMenuClientNum]);					
+			}
+			if(equali(szTypeSection,"sentry"))
+			{
+				#if defined sentryon 
+				native_Sentry_Menu (id, idMainMenu_Client[iMenuClientNum]);	
+#endif								  
+			}
+			if(equali(szTypeSection,"tesla"))
+			{
+				native_tesla_Menu (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"dispenser"))
+			{
+				native_Dispenser_Menu (id, idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// AK47 menus (shortened to 5)
+			if(equali(szTypeSection,"AK47_ITEM_MENU1"))
+			{
+				registerak47_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_ITEM_MENU2"))
+			{
+				registerak47_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_ITEM_MENU3"))
+			{
+				registerak47_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_ITEM_MENU4"))
+			{
+				registerak47_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_ITEM_MENU5"))
+			{
+				registerak47_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_INFO_MENU1"))
+			{
+				infomenu_ak47_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_INFO_MENU2"))
+			{
+				infomenu_ak47_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_INFO_MENU3"))
+			{
+				infomenu_ak47_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_INFO_MENU4"))
+			{
+				infomenu_ak47_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AK47_INFO_MENU5"))
+			{
+				infomenu_ak47_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// M4A1 menus (shortened to 5)
+			if(equali(szTypeSection,"M4A1_ITEM_MENU1"))
+			{
+				registerm4a1_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_ITEM_MENU2"))
+			{
+				registerm4a1_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_ITEM_MENU3"))
+			{
+				registerm4a1_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_ITEM_MENU4"))
+			{
+				registerm4a1_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_ITEM_MENU5"))
+			{
+				registerm4a1_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_INFO_MENU1"))
+			{
+				infomenu_m4a1_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_INFO_MENU2"))
+			{
+				infomenu_m4a1_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_INFO_MENU3"))
+			{
+				infomenu_m4a1_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_INFO_MENU4"))
+			{
+				infomenu_m4a1_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M4A1_INFO_MENU5"))
+			{
+				infomenu_m4a1_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// DEAGLE menus (shortened to 5)
+			if(equali(szTypeSection,"DEAGLE_ITEM_MENU1"))
+			{
+				registerdeagle_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_ITEM_MENU2"))
+			{
+				registerdeagle_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_ITEM_MENU3"))
+			{
+				registerdeagle_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_ITEM_MENU4"))
+			{
+				registerdeagle_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_ITEM_MENU5"))
+			{
+				registerdeagle_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_INFO_MENU1"))
+			{
+				infomenu_deagle_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_INFO_MENU2"))
+			{
+				infomenu_deagle_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_INFO_MENU3"))
+			{
+				infomenu_deagle_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_INFO_MENU4"))
+			{
+				infomenu_deagle_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"DEAGLE_INFO_MENU5"))
+			{
+				infomenu_deagle_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// BAZOOKA menus (kept as is)
+			if(equali(szTypeSection,"BAZOOKA_ITEM_MENU1"))
+			{
+				registerbazooka (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"BAZOOKA_ITEM_MENU2"))
+			{
+				registerbazooka_gold (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// AWP menus (shortened to 5)
+			if(equali(szTypeSection,"AWP_ITEM_MENU1"))
+			{
+				registerawp_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_ITEM_MENU2"))
+			{
+				registerawp_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_ITEM_MENU3"))
+			{
+				registerawp_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_ITEM_MENU4"))
+			{
+				registerawp_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_ITEM_MENU5"))
+			{
+				registerawp_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_INFO_MENU1"))
+			{
+				infomenu_awp_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_INFO_MENU2"))
+			{
+				infomenu_awp_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_INFO_MENU3"))
+			{
+				infomenu_awp_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_INFO_MENU4"))
+			{
+				infomenu_awp_4 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"AWP_INFO_MENU5"))
+			{
+				infomenu_awp_5 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// GALIL menus (kept as is - only 3)
+			if(equali(szTypeSection,"GALIL_ITEM_MENU1"))
+			{
+				registergalil_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"GALIL_ITEM_MENU2"))
+			{
+				registergalil_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"GALIL_ITEM_MENU3"))
+			{
+				registergalil_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"GALIL_INFO_MENU1"))
+			{
+				infomenu_galil_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"GALIL_INFO_MENU2"))
+			{
+				infomenu_galil_2 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"GALIL_INFO_MENU3"))
+			{
+				infomenu_galil_3 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			
+			// SSG550 and M249 menus (kept as is - only 1 each)
+			if(equali(szTypeSection,"SSG550_ITEM_MENU1"))
+			{
+				registerssg550_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"SSG550_INFO_MENU1"))
+			{
+				infomenu_ssg550_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M249_ITEM_MENU1"))
+			{
+				registersm249_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"M249_INFO_MENU1"))
+			{
+				infomenu_m249_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+		}
+	}
+
+		
+			/*
+																if(equali(szTypeSection,"laser"))
+			{
+					
+							       registerak47_1 (idMainMenu_Client[iMenuClientNum]);		
+			}
+			if(equali(szTypeSection,"laser_fence"))
+			{
+							       registerak47_2 (idMainMenu_Client[iMenuClientNum]);					
+			}
+			*/
+						if(equali(szTypeSection,"[AK47MENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksa");
+			}
+									if(equali(szTypeSection,"[BAZOOKAMENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_bazooka");
+			}
+									if(equali(szTypeSection,"[LASERSMENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hookslaser");
+			}
+												if(equali(szTypeSection,"[GALILMENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksgalil");
+			}
+												if(equali(szTypeSection,"[SSGMENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksvsk");
+			}
+												if(equali(szTypeSection,"[M249MENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksm249");
+			}
+									if(equali(szTypeSection,"[M4A1MENU]",6))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksm");
+			}
+			if(equali(szTypeSection,"[MENUPOD]",5))
+			{
+				iNumItem += 1;
+				new iArg  = 0;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						iArg += 1;
+						
+						switch(iArg)
+						{
+							case 1:
+							{
+							      
+							      new szItem[32];
+							      format(szItem,31,"%d",iNumItem);
+							      menu_additem(idMainMenu_Client[iMenuClientNum], szLeft,szItem,0, -1);
+							      copy(szSubMenu_Client[iMenuClientNum][iNumItem],127,szLeft);
+							}
+							
+							case 2:
+							{
+							     copy(szCmdMenu_Client[iMenuClientNum][iNumItem],127,szLeft);
+							}
+							
+							case 3:
+							{
+							      copy(szFlagsMenu_Client[iMenuClientNum][iNumItem],127,szLeft);
+							     
+							      iArg = 0;
+							}							
+						
+						}
+												
+						
+					}
+					
+				}
+				
+			}
+									if(equali(szTypeSection,"[M4A1INFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksm");
+			}
+												if(equali(szTypeSection,"[AK47INFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksa");
+			}
+												if(equali(szTypeSection,"[DEAGLEINFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+									while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}		
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksd");
+			}
+															if(equali(szTypeSection,"[GINFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+									while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}		
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksgalil");
+			}
+															if(equali(szTypeSection,"[M249INFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+									while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}		
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksm249");
+			}
+															if(equali(szTypeSection,"[SSG550INFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+									while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}		
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksvsk");
+			}
+															if(equali(szTypeSection,"[AWPINFOMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+									while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}		
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "info_hooksawp");
+			}
+												if(equali(szTypeSection,"[AWPMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksawp");
+			}
+
+															if(equali(szTypeSection,"[DEAGLEMENU]"))
+			{
+				iNumItem = 0;	
+				iMenuClientNum +=1;
+				
+				while(strlen(szRight))
+				{
+					split(szRight, szLeft, 255, szRight, 255, "^"");
+					
+					if(!equali(szLeft," ",1))
+					{
+						copy(szNameMenu_Client[iMenuClientNum],127,szLeft);
+				
+					}
+				}
+							
+				idMainMenu_Client[iMenuClientNum] = menu_create(szNameMenu_Client[iMenuClientNum], "menu_hooksdg");
+			}
+		}
+		
+
+// =================================================================================================
+public menu_hookslaser(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == lasernumber[0]-1)
+	{
+		native_Laser_build(id)
+	}
+		if(item == lasernumber[1]-1)
+	{
+		native_VLaser_build(id)
+	}
+		if(item == lasernumber[2]-1)
+	{
+		native_HLaser_build(id)
+	}
+		if(item == lasernumber[3]-1)
+	{
+		native_scaner_build(id)
+	}
+		if(item == lasernumber[4]-1)
+	{
+		buylaserfence(id)
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_hooksgalil(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == galilnumber[0])
+	{
+		karo4eday_galil_1(id)
+	}
+		if(item == galilnumber[1])
+	{
+		karo4eday_galil_2(id)
+	}
+			if(item == galilnumber[2])
+	{
+		karo4eday_galil_3(id)
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_hooksvsk(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == ssg550number[0])
+	{
+		karo4eday_ssg550_1(id)
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_hooksm249(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == m249number[0])
+	{
+		karo4eday_m249_1(id)
+	}
+		if(item == m249number[1])
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_bazooka(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == bazookanumber[0]-1)
+	{
+		client_cmd(id, "say /rpg")
+	}
+		if(item == bazookanumber[1]-1)
+	{
+		client_cmd(id, "say /rpg_gold")
+	}
+}
+public menu_hooksa(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == ak47number[0])
+	{
+		karo4eday_ak47_1(id)
+	}
+		if(item == ak47number[1])
+	{
+		karo4eday_ak47_2(id)
+	}
+		if(item == ak47number[2])
+	{
+		karo4eday_ak47_3(id)
+	}
+		if(item == ak47number[3])
+	{
+		karo4eday_ak47_4(id)
+	}
+		if(item == ak47number[4])
+	{
+		karo4eday_ak47_5(id)
+	}	if(item == ak47number[5])
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_hooksm(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == m4a1number[0])
+	{
+		karo4eday_m4a1_1(id)
+	}
+	if(item == m4a1number[1])
+	{
+		karo4eday_m4a1_2(id)
+	}
+		if(item == m4a1number[2])
+	{
+		karo4eday_m4a1_3(id)
+	}
+		if(item == m4a1number[3])
+	{
+		karo4eday_m4a1_4(id)
+	}
+		if(item == m4a1number[4])
+	{
+		karo4eday_m4a1_5(id)
+	}	if(item == m4a1number[5])
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksa(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == ak47number[0]-1)
+	{
+		consoleprint_ak47_1(id)
+	}
+		if(item == ak47number[1]-1)
+	{
+		consoleprint_ak47_2(id)
+	}
+		if(item == ak47number[2]-1)
+	{
+		consoleprint_ak47_3(id)
+	}
+		if(item == ak47number[3]-1)
+	{
+		consoleprint_ak47_4(id)
+	}
+		if(item == ak47number[4]-1)
+	{
+		consoleprint_ak47_5(id)
+	}	if(item == ak47number[5]-1)
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksm(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == m4a1number[0]-1)
+	{
+		consoleprint_m4a1_1(id)
+	}
+		if(item == m4a1number[1]-1)
+	{
+		consoleprint_m4a1_2(id)
+	}
+		if(item == m4a1number[2]-1)
+	{
+		consoleprint_m4a1_3(id)
+	}
+		if(item == m4a1number[3]-1)
+	{
+		consoleprint_m4a1_4(id)
+	}
+		if(item == m4a1number[4]-1)
+	{
+		consoleprint_m4a1_5(id)
+	}	if(item == m4a1number[5]-1)
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksd(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == deaglenumber[0]-1)
+	{
+		consoleprint_deagle_1(id)
+	}
+		if(item == deaglenumber[1]-1)
+	{
+		consoleprint_deagle_2(id)
+	}
+		if(item == deaglenumber[2]-1)
+	{
+		consoleprint_deagle_3(id)
+	}
+		if(item == deaglenumber[3]-1)
+	{
+		consoleprint_deagle_4(id)
+	}
+		if(item == deaglenumber[4]-1)
+	{
+		consoleprint_deagle_5(id)
+	}	if(item == deaglenumber[5]-1)
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksgalil(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == galilnumber[0]-1)
+	{
+		consoleprint_galil_1(id)
+	}
+		if(item == galilnumber[1]-1)
+	{
+		consoleprint_galil_2(id)
+	}
+		if(item == galilnumber[2]-1)
+	{
+		consoleprint_galil_3(id)
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksvsk(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == ssg550number[0]-1)
+	{
+		consoleprint_ssg550_1(id)
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+	return info_hooksvsk(id, menu, item)
+}
+public info_hooksm249(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == m249number[0]-1)
+	{
+		consoleprint_m249_1(id)
+	}
+		if(item == m249number[1]-1)
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public info_hooksawp(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == awpnumber[0]-1)
+	{
+		consoleprint_awp_1(id)
+	}
+		if(item == awpnumber[1]-1)
+	{
+		consoleprint_awp_2(id)
+	}
+		if(item == awpnumber[2]-1)
+	{
+		consoleprint_awp_3(id)
+	}
+		if(item == awpnumber[3]-1)
+	{
+		consoleprint_awp_4(id)
+	}
+		if(item == awpnumber[4]-1)
+	{
+		consoleprint_awp_5(id)
+	}	if(item == awpnumber[5]-1)
+	{
+
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public menu_hooksawp(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == awpnumber[0])
+	{
+		karo4eday_awp_1(id)
+	}
+		if(item == awpnumber[1])
+	{
+		karo4eday_awp_2(id)
+	}
+		if(item == awpnumber[2])
+	{
+		karo4eday_awp_3(id)
+	}
+		if(item == awpnumber[3])
+	{
+		karo4eday_awp_4(id)
+	}
+		if(item == awpnumber[4])
+	{
+		karo4eday_awp_5(id)
+	}	if(item == awpnumber[5])
+	{
+	
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+}
+public Menu_hook(id, menu, item)
+{
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd, 5, szItemName, 63, callback);
+	
+	// РСЃРїСЂР°РІР»РµРЅС‹ РІСЃРµ РІС‹Р·РѕРІС‹ С„СѓРЅРєС†РёР№ - РґРѕР±Р°РІР»РµРЅС‹ С‚РѕС‡РєРё СЃ Р·Р°РїСЏС‚РѕР№
+	if(item == deaglenumber[0])
+	{
+		karo4eday_deagle_1(id);  // <- РґРѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+	}
+	if(item == deaglenumber[1])
+	{
+		karo4eday_deagle_2(id);  // <- РґРѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+	}
+	if(item == deaglenumber[2])
+	{
+		karo4eday_deagle_3(id);  // <- РґРѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+	}
+	if(item == deaglenumber[3])
+	{
+		karo4eday_deagle_4(id);  // <- РґРѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+	}
+	if(item == deaglenumber[4])
+	{
+		karo4eday_deagle_5(id);  // <- РґРѕР±Р°РІР»РµРЅР° С‚РѕС‡РєР° СЃ Р·Р°РїСЏС‚РѕР№
+	}
+	if(item == deaglenumber[5])
+	{
+		// РїСѓСЃС‚РѕР№ Р±Р»РѕРє - РґРѕР±Р°РІСЊ СЃСЋРґР° РєРѕРґ РґР»СЏ 6-РіРѕ СЌР»РµРјРµРЅС‚Р° РµСЃР»Рё РЅСѓР¶РЅРѕ
+	}
+	
+	new iChoicec = str_to_num(cmd);
+	new iMenu = 1;
+	new iIndexMenu = 1;
+	
+	for(new i = 1; i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	
+	for(new iNumArg = 1; iNumArg <= MAX_ARG; iNumArg++)
+	{
+		if(iChoicec == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec], szItemName, 32))
+			{
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+				if (bitFlags & 8)
+				{
+					new iPage = floatround(float(item / 7), floatround_method);
+					menu_display(id, iMenu, iPage);
+				}
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec], "menu", 32))
+				{
+					for(new iIn = 1; iIn <= iMenuClientNum; iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec], szNameMenu_Client[iIn], 32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+	return PLUGIN_HANDLED;
+}
+
+public menu_hook(id, menu, item)
+{
+//key++
+	if (item == MENU_EXIT)
+		return PLUGIN_HANDLED;
+	
+	new cmd[6], szItemName[64];
+	new access, callback;
+	menu_item_getinfo(menu, item, access, cmd,5, szItemName, 63, callback);
+	if(item == iChoice[0]-1)
+	{
+		native_tesla_build(id)
+	}
+		if(item == iChoice[1]-1)
+	{
+		native_Laser_build(id)
+	}
+		if(item == iChoice[2]-1)
+	{
+		buylaserfence(id)
+	}
+		if(item == iChoice[3]-1)
+	{
+						#if defined sentryon 
+							     native_Sentry_Build(id)
+#endif	
+	}
+		if(item == iChoice[4]-1)
+	{
+		native_Dispenser_Build(id)
+	}
+		if(item == iChoice[5]-1)
+	{
+		native_VLaser_build(id)
+	}
+		if(item == iChoice[6]-1)
+	{
+		native_HLaser_build(id)
+	}
+		if(item == iChoice[7]-1)
+	{
+		native_scaner_build(id)
+	}
+		if(item == iChoice[8]-1)
+	{
+		client_cmd(-1,"rpg")
+	}
+		if(item == iChoice[9]-1)
+	{
+		client_cmd(-1,"rpg_gold")
+	}
+		if(item == iChoice[10]-1)
+	{
+		karo4eday_ak47_1(id)
+	}
+		if(item == iChoice[11]-1)
+	{
+		karo4eday_ak47_2(id)
+	}
+		if(item == iChoice[12]-1)
+	{
+		karo4eday_ak47_3(id)
+	}
+		if(item == iChoice[13]-1)
+	{
+		karo4eday_ak47_4(id)
+	}
+		if(item == iChoice[14]-1)
+	{
+		karo4eday_ak47_5(id)
+	}
+		if(item == iChoice[15]-1)
+	{
+		karo4eday_m4a1_1(id)
+	}
+		if(item == iChoice[16]-1)
+	{
+		karo4eday_m4a1_2(id)
+	}
+		if(item == iChoice[17]-1)
+	{
+		karo4eday_m4a1_3(id)
+	}
+		if(item == iChoice[18]-1)
+	{
+		karo4eday_m4a1_4(id)
+	}
+		if(item == iChoice[19]-1)
+	{
+		karo4eday_m4a1_5(id)
+	}
+		if(item == iChoice[20]-1)
+	{
+		karo4eday_awp_1(id)
+	}
+		if(item == iChoice[21]-1)
+	{
+		karo4eday_awp_2(id)
+	}
+		if(item == iChoice[22]-1)
+	{
+		karo4eday_awp_3(id)
+	}
+		if(item == iChoice[23]-1)
+	{
+		karo4eday_awp_4(id)
+	}
+		if(item == iChoice[24]-1)
+	{
+		karo4eday_awp_5(id)
+	}
+		if(item == iChoice[25]-1)
+	{
+		karo4eday_deagle_1(id)
+	}
+		if(item == iChoice[26]-1)
+	{
+		karo4eday_deagle_2(id)
+	}
+		if(item == iChoice[27]-1)
+	{
+		karo4eday_deagle_3(id)
+	}
+		if(item == iChoice[28]-1)
+	{
+		karo4eday_deagle_4(id)
+	}
+		if(item == iChoice[29]-1)
+	{
+		karo4eday_deagle_5(id)
+	}
+		if(item == iChoice[30]-1)
+	{
+		karo4eday_galil_1(id)
+	}
+		if(item == iChoice[31]-1)
+	{
+		karo4eday_galil_2(id)
+	}
+		if(item == iChoice[32]-1)
+	{
+		karo4eday_ssg550_1(id)
+	}
+		if(item == iChoice[35]-1)
+	{
+		Command_GiveAmmo(id)
+	}
+		if(item == iChoice[1]-1)
+	{
+		Command_GiveGrenade(id)
+	}
+		if(item == iChoice[2]-1)
+	{
+		karo4eday_galil_3(id)
+	}
+		if(item == iChoice[33]-1)
+	{
+		karo4eday_m249_1(id)
+	}
+		if(item == iChoice[34]-1)
+	{
+	
+	}
+		new iChoicec = str_to_num(cmd);
+		new iMenu = 1;
+	new iIndexMenu = 1;
+	for(new i = 1;i <= iMenuClientNum; i++)
+	{
+		if(idMainMenu_Client[i] == menu)
+		{
+			iMenu = menu;
+			iIndexMenu = i;
+		}
+	}
+	for(new iNumArg = 1;iNumArg <= MAX_ARG; iNumArg++)
+	{
+		
+		
+		if(iChoicec  == iNumArg)
+		{
+			if(equali(szSubMenu_Client[iIndexMenu][iChoicec],szItemName,32))
+			{
+				
+				new bitFlags = read_flags(szFlagsMenu_Client[iIndexMenu][iChoicec]);
+
+			
+				if (bitFlags & 8)
+				{
+	
+					new iPage = floatround(float(item / 7), floatround_method);
+														
+					menu_display(id, iMenu,iPage);
+					
+				}
+							
+				
+				if(equali(szFlagsMenu_Client[iIndexMenu][iChoicec],"menu",32))
+				{
+					for(new iIn = 1;iIn <= iMenuClientNum;iIn++)
+					{
+						if(equali(szCmdMenu_Client[iIndexMenu][iChoicec],szNameMenu_Client[iIn],32))
+							menu_display(id, idMainMenu_Client[iIn], 0);
+					}
+				}
+			}
+		}
+	}
+	}
+	/*
+if(key==1) Command_GiveGrenade(id)
+if(key==2) native_Laser_build(id)
+if(key==3) buylaserfence (id)
+if(key==4) native_Dispenser_Build(id)
+if(key==5) karo4eday_BAZOOKA(id) 
+if(key==6) Command_GiveAmmo(id)
+
+if(key==7) karo4eday_m249 (id)
+
+if(key==8) karo4eday_awp_gold (id)
+if(key==9) karo4eday_ak47_1(id)
+
+if(key==10) karo4eday_m4a1_1(id)
+if(key==11) karo4eday_m4a1_2(id)
+	
+	
+if(key==12) karo4eday_awp_winter(id)
+if(key==13) karo4eday_ak47_1(id)
+if(key==14) karo4eday_ak47_1(id)
+if(key==15) karo4eday_ak47_4(id)
+	
+if(key==16) karo4eday_ak47_5(id)
+if(key==17) karo4eday_galildarksouls(id)
+if(key==18) karo4eday_m249_winter(id)
+if(key==19) karo4eday_deagle_1(id)
+//if(key==20) karo4eday_m249_gold(id)
+if(key==21) karo4eday_vsk(id)
+	*/
+/*
+public Menu_laser(id)
+{
+	new menu = menu_create("CSSB РњР°РіР°Р·РёРЅ CSDM Р¦РµРЅР°\R $","menu_laser")
+
+public menu_laser(id, menu, key)
+{
+key++
+*/
+
+public Command_GiveGrenade(id)
+{
+		if (grenade_item_On_Off <= 0)
+	{
+		native_Laser_build(id)
+		return 0;
+	}
+	if (cs_get_user_money(id) >= grenade_item_cost)
+	{
+				cs_set_user_money(id, cs_get_user_money(id) - grenade_item_cost)
+			give_item(id, "weapon_hegrenade")
+			give_item(id, "weapon_flashbang")
+			give_item(id, "weapon_flashbang")
+			give_item( id, "weapon_smokegrenade" )
+			ChatColor( id, "%L %L", id, "PREFIX_CSDM_SHOP", id, "BOLOTO_BUY_ITEM", id, "ITEM_1_BOLOTO", grenade_item_cost)
+	}
+	else
+	{
+		format(CSSB_NAME, 255, "%L %L", -1, "PREFIX_CSDM_SHOP", -1, "BOLOTO_ITEM_NO_MONEY",grenade_item_cost);
+		ChatColor (id, CSSB_NAME)
+		return 0
+}
+}
+public mfAddGrenadeMenu(menu)
+{
+	//iLen += formatex(menu[iLen], charsmax(menu) - iLen, "%L%L%L%L%L%L%L %L %L %L %L^n",id, "VIP", id, "MG_COLOR1", id, "MG[", id, "MG_COLOR2", id, "AMMO", id, "MG_COLOR1", id, "MG]", id, "-", id, "MG_COLOR", id, "ITEM_1_BOLOTO3", id, "COST1", get_pcvar_num(ak_cost_vulcan) )    
+	new szKeyItem[128];
+		if (grenade_item_On_Off <= 0)
+	{
+		return 0;
+	}
+		if (grenade_iItemMenuOnOffVip > 0)
+	{
+		formatex(CSSB_NAME, 127, "%L %L %L", -1, "BOLOTO_VIP_PREFIX", -1, "ITEM_1_BOLOTO", -1, "BOLOTO_SHOP_COST", grenade_item_cost);
+
+	}
+	else
+	{
+		formatex(CSSB_NAME, 127, "%L %L", -1, "ITEM_1_BOLOTO", -1, "BOLOTO_SHOP_COST", grenade_item_cost);
+	}
+	menu_additem(menu, CSSB_NAME);
+	return 0;
+}
+
+new const MAXCLIP[] = { -1, 13, -1, 10, 1, 7, -1, 30, 30, 1, 30, 20, 25, 30, 35, 25, 12, 20,
+			10, 30, 100, 8, 30, 30, 20, 2, 7, 30, 30, -1, 50 }
+const OFFSET_CLIPAMMO = 51
+const OFFSET_LINUX_WEAPONS = 4
+new g_has_unlimited_clip[33]
+public Command_GiveAmmo(id)
+{
+		if (ammo_item_On_Off <= 0)
+	{
+		return 0;
+	}
+	else
+	{
+	new szNameItemNoBuy[256];
+	if (g_has_unlimited_clip[id] == 1)
+	{
+		formatex(szNameItemNoBuy, 255, "%L %L",-1 ,"PREFIX_CSDM_SHOP", -1, "BOLOTO_MG_ZAPRET_2", -1, "ITEM_6_BOLOTO");
+		ChatColor (id, szNameItemNoBuy)
+	}
+	else
+	{
+	if (cs_get_user_money(id) >= ammo_item_cost)
+	{
+				cs_set_user_money(id, cs_get_user_money(id) - ammo_item_cost)
+				g_has_unlimited_clip[id] = 1
+				register_message(get_user_msgid("CurWeapon"), "message_cur_weapon")
+			ChatColor( id, "%L %L", id, "PREFIX_CSDM_SHOP", id, "BOLOTO_BUY_ITEM", id, "ITEM_6_BOLOTO", ammo_item_cost)
+	}
+	else
+	{
+		format(CSSB_NAME, 255, "%L %L", -1, "PREFIX_CSDM_SHOP", -1, "BOLOTO_ITEM_NO_MONEY",ammo_item_cost);
+		ChatColor (id, CSSB_NAME)
+		return 0
+}
+}
+}
+}
+public message_cur_weapon(msg_id, msg_dest, msg_entity)
+{
+	// Player doesn't have the unlimited clip upgrade
+		if (g_has_unlimited_clip[msg_entity] == 0)
+		return;
+	// Player not alive or not an active weapon
+	if (!is_user_alive(msg_entity) || get_msg_arg_int(1) != 1)
+		return;
+	
+	static weapon, clip
+	weapon = get_msg_arg_int(2) // get weapon ID
+	clip = get_msg_arg_int(3) // get weapon clip
+	
+	// Unlimited Clip Ammo
+	if (MAXCLIP[weapon] > 2) // skip grenades
+	{
+		set_msg_arg_int(3, get_msg_argtype(3), MAXCLIP[weapon]) // HUD should show full clip all the time
+		
+		if (clip < 2) // refill when clip is nearly empty
+		{
+			// Get the weapon entity
+			static wname[32], weapon_ent
+			get_weaponname(weapon, wname, sizeof wname - 1)
+			weapon_ent = fm_find_ent_by_owner(-1, wname, msg_entity)
+			
+			// Set max clip on weapon
+			fm_set_weapon_ammo(weapon_ent, MAXCLIP[weapon])
+		}
+	}
+}
+stock fm_set_weapon_ammo(entity, amount)
+{
+	set_pdata_int(entity, OFFSET_CLIPAMMO, amount, OFFSET_LINUX_WEAPONS);
+}
+stock fm_find_ent_by_owner(entity, const classname[], owner)
+{
+	while ((entity = engfunc(EngFunc_FindEntityByString, entity, "classname", classname)) && pev(entity, pev_owner) != owner) {}
+
+	return entity;
+}
+
+public mfAddAmmoMenu(menu)
+{
+	//iLen += formatex(menu[iLen], charsmax(menu) - iLen, "%L%L%L%L%L%L%L %L %L %L %L^n",id, "VIP", id, "MG_COLOR1", id, "MG[", id, "MG_COLOR2", id, "AMMO", id, "MG_COLOR1", id, "MG]", id, "-", id, "MG_COLOR", id, "ITEM_1_BOLOTO3", id, "COST1", get_pcvar_num(ak_cost_vulcan) )
+	new szKeyItem[128];
+		if (ammo_item_On_Off <= 0)
+	{
+		return 0;
+	}
+		if (ammo_iItemMenuOnOffVip > 0)
+	{
+		formatex(CSSB_NAME, 127, "%L %L %L", -1, "VIP", -1, "ITEM_6_BOLOTO", -1, "BOLOTO_SHOP_COST", ammo_item_cost);
+	}
+	else
+	{
+		formatex(CSSB_NAME, 127, "%L %L", -1, "ITEM_6_BOLOTO", -1, "BOLOTO_SHOP_COST", ammo_item_cost);
+	}
+	menu_additem(menu, CSSB_NAME);
+	return 0;
+}
+
+stock ChatColor(const idUser, const input[], any:...)
+{
+    new count = 1, arrPlayers[32];
+    new szMsgText[256];
+    vformat(szMsgText, charsmax(szMsgText), input, 3);
+
+    replace_all(szMsgText, charsmax(szMsgText), "!g", "^4");
+    replace_all(szMsgText, charsmax(szMsgText), "!n", "^1");
+    replace_all(szMsgText, charsmax(szMsgText), "!t", "^3");
+
+    if (idUser)
+        arrPlayers[0] = idUser;
+    else
+        get_players(arrPlayers, count, "ch");
+
+    for (new i = 0; i < count; i++)
+    {
+        if (is_user_connected(arrPlayers[i]))
+        {
+            message_begin(MSG_ONE_UNRELIABLE, get_user_msgid("SayText"), _, arrPlayers[i]);
+            write_byte(arrPlayers[i]);
+            write_string(szMsgText);
+            message_end();
+        }
+    }
+}
+// Р”РѕР±Р°РІСЊС‚Рµ СЌС‚Рё РїРµСЂРµРјРµРЅРЅС‹Рµ РІ РЅР°С‡Р°Р»Рѕ С„Р°Р№Р»Р° (РїРѕСЃР»Рµ #include)
+new ammo_item_On_Off = 1;
+new ammo_item_cost = 1000;
+new grenade_item_On_Off = 1;
+new grenade_item_cost = 500;
+
+// AK47 С„СѓРЅРєС†РёРё
+public karo4eday_ak47_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    
+    // РџСЂРѕРІРµСЂРєР° РЅР° РґРµРЅСЊРіРё (РµСЃР»Рё РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЃРёСЃС‚РµРјР° РґРµРЅРµРі)
+    // if (cs_get_user_money(id) < СЃС‚РѕРёРјРѕСЃС‚СЊ) return PLUGIN_HANDLED;
+    
+    fm_give_item(id, "weapon_ak47");
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_ak47_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_ak47");
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_ak47_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_ak47");
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_ak47_4(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_ak47");
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_ak47_5(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_ak47");
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    return PLUGIN_HANDLED;
+}
+
+// M4A1 С„СѓРЅРєС†РёРё
+public karo4eday_m4a1_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m4a1");
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m4a1_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m4a1");
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m4a1_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m4a1");
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m4a1_4(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m4a1");
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m4a1_5(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m4a1");
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    return PLUGIN_HANDLED;
+}
+
+// DEAGLE С„СѓРЅРєС†РёРё
+public karo4eday_deagle_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_deagle");
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_deagle_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_deagle");
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_deagle_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_deagle");
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_deagle_4(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_deagle");
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_deagle_5(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_deagle");
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    return PLUGIN_HANDLED;
+}
+
+// AWP С„СѓРЅРєС†РёРё
+public karo4eday_awp_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_awp");
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_awp_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_awp");
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_awp_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_awp");
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_awp_4(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_awp");
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_awp_5(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_awp");
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    return PLUGIN_HANDLED;
+}
+
+// GALIL С„СѓРЅРєС†РёРё
+public karo4eday_galil_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_galil");
+    cs_set_user_bpammo(id, CSW_GALIL, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_galil_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_galil");
+    cs_set_user_bpammo(id, CSW_GALIL, 90);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_galil_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_galil");
+    cs_set_user_bpammo(id, CSW_GALIL, 90);
+    return PLUGIN_HANDLED;
+}
+
+// SSG550 С„СѓРЅРєС†РёСЏ
+public karo4eday_ssg550_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_sg550");
+    cs_set_user_bpammo(id, CSW_SG550, 90);
+    return PLUGIN_HANDLED;
+}
+
+// M249 С„СѓРЅРєС†РёРё
+public karo4eday_m249_1(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m249");
+    cs_set_user_bpammo(id, CSW_M249, 200);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m249_2(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m249");
+    cs_set_user_bpammo(id, CSW_M249, 200);
+    return PLUGIN_HANDLED;
+}
+
+public karo4eday_m249_3(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    fm_give_item(id, "weapon_m249");
+    cs_set_user_bpammo(id, CSW_M249, 200);
+    return PLUGIN_HANDLED;
+}
+
+// Р¤СѓРЅРєС†РёРё РґР»СЏ СЂРµРіРёСЃС‚СЂР°С†РёРё РїСЂРµРґРјРµС‚РѕРІ РІ РјРµРЅСЋ
+public registerak47_1(menu) { menu_additem(menu, "AK47 #1", "ak47_1", 0, -1); }
+public registerak47_2(menu) { menu_additem(menu, "AK47 #2", "ak47_2", 0, -1); }
+public registerak47_3(menu) { menu_additem(menu, "AK47 #3", "ak47_3", 0, -1); }
+public registerak47_4(menu) { menu_additem(menu, "AK47 #4", "ak47_4", 0, -1); }
+public registerak47_5(menu) { menu_additem(menu, "AK47 #5", "ak47_5", 0, -1); }
+
+public registerm4a1_1(menu) { menu_additem(menu, "M4A1 #1", "m4a1_1", 0, -1); }
+public registerm4a1_2(menu) { menu_additem(menu, "M4A1 #2", "m4a1_2", 0, -1); }
+public registerm4a1_3(menu) { menu_additem(menu, "M4A1 #3", "m4a1_3", 0, -1); }
+public registerm4a1_4(menu) { menu_additem(menu, "M4A1 #4", "m4a1_4", 0, -1); }
+public registerm4a1_5(menu) { menu_additem(menu, "M4A1 #5", "m4a1_5", 0, -1); }
+
+public registerdeagle_1(menu) { menu_additem(menu, "Deagle #1", "deagle_1", 0, -1); }
+public registerdeagle_2(menu) { menu_additem(menu, "Deagle #2", "deagle_2", 0, -1); }
+public registerdeagle_3(menu) { menu_additem(menu, "Deagle #3", "deagle_3", 0, -1); }
+public registerdeagle_4(menu) { menu_additem(menu, "Deagle #4", "deagle_4", 0, -1); }
+public registerdeagle_5(menu) { menu_additem(menu, "Deagle #5", "deagle_5", 0, -1); }
+
+public registerawp_1(menu) { menu_additem(menu, "AWP #1", "awp_1", 0, -1); }
+public registerawp_2(menu) { menu_additem(menu, "AWP #2", "awp_2", 0, -1); }
+public registerawp_3(menu) { menu_additem(menu, "AWP #3", "awp_3", 0, -1); }
+public registerawp_4(menu) { menu_additem(menu, "AWP #4", "awp_4", 0, -1); }
+public registerawp_5(menu) { menu_additem(menu, "AWP #5", "awp_5", 0, -1); }
+
+public registergalil_1(menu) { menu_additem(menu, "Galil #1", "galil_1", 0, -1); }
+public registergalil_2(menu) { menu_additem(menu, "Galil #2", "galil_2", 0, -1); }
+public registergalil_3(menu) { menu_additem(menu, "Galil #3", "galil_3", 0, -1); }
+
+public registerssg550_1(menu) { menu_additem(menu, "SSG550 #1", "ssg550_1", 0, -1); }
+
+public registerm249_1(menu) { menu_additem(menu, "M249 #1", "m249_1", 0, -1); }
+public registerm249_2(menu) { menu_additem(menu, "M249 #2", "m249_2", 0, -1); }
+public registerm249_3(menu) { menu_additem(menu, "M249 #3", "m249_3", 0, -1); }
+
+public registerbazooka(menu) { menu_additem(menu, "RPG", "rpg", 0, -1); }
+
+// Р¤СѓРЅРєС†РёРё РґР»СЏ РґР°С‡Рё РїР°С‚СЂРѕРЅРѕРІ Рё РіСЂР°РЅР°С‚
+public Command_GiveAmmo(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    
+    // Р”Р°С‚СЊ РїР°С‚СЂРѕРЅС‹ РґР»СЏ РІСЃРµРіРѕ РѕСЂСѓР¶РёСЏ
+    cs_set_user_bpammo(id, CSW_AK47, 90);
+    cs_set_user_bpammo(id, CSW_M4A1, 90);
+    cs_set_user_bpammo(id, CSW_AWP, 30);
+    cs_set_user_bpammo(id, CSW_DEAGLE, 35);
+    cs_set_user_bpammo(id, CSW_GALIL, 90);
+    cs_set_user_bpammo(id, CSW_SG550, 90);
+    cs_set_user_bpammo(id, CSW_M249, 200);
+    
+    client_print(id, print_chat, "Р’С‹ РїРѕР»СѓС‡РёР»Рё Р±РѕРµРїСЂРёРїР°СЃС‹!");
+    return PLUGIN_HANDLED;
+}
+
+public Command_GiveGrenade(id)
+{
+    if (!is_user_alive(id)) return PLUGIN_HANDLED;
+    
+    fm_give_item(id, "weapon_hegrenade");
+    fm_give_item(id, "weapon_flashbang");
+    fm_give_item(id, "weapon_smokegrenade");
+    
+    client_print(id, print_chat, "Р’С‹ РїРѕР»СѓС‡РёР»Рё РіСЂР°РЅР°С‚С‹!");
+    return PLUGIN_HANDLED;
+}
+
+// Р¤СѓРЅРєС†РёРё РґР»СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІ РјРµРЅСЋ
+public mfAddAmmoMenu(menu)
+{
+    if (ammo_item_On_Off > 0)
+    {
+        new szItem[64];
+        format(szItem, 63, "Р‘РѕРµРїСЂРёРїР°СЃС‹ - $%d", ammo_item_cost);
+        menu_additem(menu, szItem, "ammo", 0, -1);
+    }
+}
+
+public mfAddGrenadeMenu(menu)
+{
+    if (grenade_item_On_Off > 0)
+    {
+        new szItem[64];
+        format(szItem, 63, "Р“СЂР°РЅР°С‚С‹ - $%d", grenade_item_cost);
+        menu_additem(menu, szItem, "grenades", 0, -1);
+    }
+}
